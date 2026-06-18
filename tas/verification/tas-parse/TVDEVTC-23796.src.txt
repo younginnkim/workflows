@@ -1,0 +1,40 @@
+# TVDEVTC-23796 [Home] com.webos.app.home-FeatureBAT-r4.0
+(source: zephyr-api:zapi, components: com.webos.app.home)
+
+1. STEP: *Hero Banner*
+[pre-condition]
+1. network connected
+2. user agreements is allowed
+3. ad setting on
+
+[test-sequence]
+Launch home app
+   DATA: Check if Hero Banner is shown
+   EXPECTED: Hero Banner with AD is shown on the first screen of home.
+2. STEP: *Q Card List (webOS23 ~ webOS26)*
+Launch home app
+   DATA: Check if Q Card List is shown
+   EXPECTED: Q Card List is shown on the first screen of home.
+3. STEP: *App List*
+Launch home app
+   DATA: Check if App List is shown
+   EXPECTED: App List is shown on the first screen of home.
+4. STEP:   *Recommended Line*
+Launch home app
+   DATA: Check if Recommended Line is shown
+   EXPECTED: Recommended Line is shown on the first screen of home.
+5. STEP:  *Now Streaming*
+*(= Content Preview)*
+Launch home app
+   DATA: Check if Now Streaming shelf is shown
+   EXPECTED: Now Streaming Shelf is shown on the first screen of home.
+6. STEP: *Media Discovery App*
+1. Move to App List shelf
+2. Select Media Discovery App
+   DATA: Check if Media Discovery App is launched
+   EXPECTED: Media Discovery App is launched.
+7. STEP: *Live TV*
+1. Move to Recommend Line shelf
+2. Select the Live TV tile
+   DATA: Check if Live TV channel is launched
+   EXPECTED: Change to the selected channel.
