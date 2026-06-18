@@ -1,0 +1,44 @@
+app:
+  sam_app_id: com.webos.app.home
+  flutter_app_id: com.webos.tas.home
+  flag_file: /var/luna/preferences/tas_home_enabled
+  base_class_name: homeTasBase
+  jira_id: TVDEVTC-74461
+
+# TypeName -> property keys exposed via getProperty (app_test.dart toStringMap).
+# 모두 대상 앱 소스에서 확인됨 (com.webos.app.home_qml/lib).
+widgets:
+  HeroBanner: []                     # presence-only. Key('hero_banner_wrap_widget') (herobanner/view/hero_banner.dart:83)
+  EShelfWidget: [shelfId]            # final String shelfId; Key('e_shelf_widget_${shelfId}') (e_shelf_widget.dart:46,232)
+  NowStreamingShelf: []              # presence-only. Key('now_streaming_shelf') (now_streaming_shelf.dart:106)
+  AppList: []                        # presence-only. StatelessWidget, no fields (applist/view/app_list.dart:21)
+  AppItemWidget: [id, title]         # final ListLaunchPointsData model; key: Key(model.id) (app_item_widget.dart:26; app_list.dart:208)
+  VisibilityDetector: []             # presence-only. recommend 셸프 아이템 래퍼; key: Key('e_shelf_item_${shelfId}_$index') (e_shelf_widget.dart:417)
+
+bindings:
+  # ── step 1: hero_banner_shown ──
+  - { step_id: 1, action_id: 1, typeName: HeroBanner, find: { method: byKey, value: hero_banner_wrap_widget } }
+  - { step_id: 1, expected_index: 0, kind: widget_visible, typeName: HeroBanner }
+
+  # ── step 2: recommended_line_shown ──
+  - { step_id: 2, action_id: 1, typeName: EShelfWidget, find: { method: byKey, value: e_shelf_widget_FORYOU_SH_RECOMMENDED } }
+  - { step_id: 2, expected_index: 0, kind: widget_visible, typeName: EShelfWidget, where: { shelfId: FORYOU_SH_RECOMMENDED } }
+
+  # ── step 3: now_streaming_shown ──
+  - { step_id: 3, action_id: 1, typeName: NowStreamingShelf, find: { method: byKey, value: now_streaming_shelf } }
+  - { step_id: 3, expected_index: 0, kind: widget_visible, typeName: NowStreamingShelf }
+
+  # ── step 4: media_discovery_launch (user: com.webos.app.mediadiscovery) ──
+  - { step_id: 4, action_id: 1, typeName: AppList, find: { method: byTypeName, value: AppList } }
+  - { step_id: 4, action_id: 2, typeName: AppItemWidget, find: { method: byKey, value: com.webos.app.mediadiscovery } }
+  - { step_id: 4, expected_index: 0, kind: app_launch, appId: com.webos.app.mediadiscovery }
+
+  # ── step 5: live_tv_launch (user: recommend 셸프의 첫 아이템 클릭 = Live TV 실행) ──
+  # action1: recommend 셸프로 이동, action2: 그 셸프의 첫 아이템(index 0) 포커스 -> OK -> com.webos.app.livetv.
+  - { step_id: 5, action_id: 1, typeName: EShelfWidget, find: { method: byKey, value: e_shelf_widget_FORYOU_SH_RECOMMENDED } }
+  - { step_id: 5, action_id: 2, typeName: VisibilityDetector, find: { method: byKey, value: e_shelf_item_FORYOU_SH_RECOMMENDED_0 } }
+  - { step_id: 5, expected_index: 0, kind: app_launch, appId: com.webos.app.livetv }
+  # expected_index 1 = IR navigation/channel_change -> Live TV 포그라운드(앱 실행)로 매핑
+  - { step_id: 5, expected_index: 1, kind: app_launch, appId: com.webos.app.livetv }
+
+unsupported: []

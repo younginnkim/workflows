@@ -1,0 +1,179 @@
+app:
+  sam_app_id: com.webos.app.home
+  flutter_app_id: com.webos.tas.home
+  flag_file: /var/luna/preferences/tas_home_enabled
+  base_class_name: homeTasBase
+
+test_case_id: home_main_shelves_and_launch
+title: 홈 첫 화면 주요 셸프(Hero Banner/Recommended Line/Now Streaming) 노출 및 앱·채널 실행 확인
+source_ticket: TVDEVTC-74461
+target_app: com.webos.app.home
+
+preconditions:
+  - kind: environment
+    value: network connected
+    app: null
+    source_span: "[pre-condition]\n1. network connected"
+  - kind: environment
+    value: user agreements is allowed
+    app: null
+    source_span: "2. user agreements is allowed"
+  - kind: environment
+    value: ad setting on
+    app: null
+    source_span: "3. ad setting on"
+
+steps:
+  - id: 1
+    name: hero_banner_shown
+    preconditions:
+      - kind: app_lifecycle
+        value: resumed
+        app: com.webos.app.home
+        source_span: "Launch home app"
+    actions:
+      - id: 1
+        intent: find
+        target:
+          role: banner
+          match:
+            text: Hero Banner
+            key: null
+            index: null
+          container: null
+        source_span: "DATA: Check if Hero Banner is shown"
+    expected:
+      - kind: widget_visible
+        value: hero_banner
+        params: null
+        source_span: "EXPECTED: Hero Banner with AD is shown on the first screen of home."
+
+  - id: 2
+    name: recommended_line_shown
+    preconditions:
+      - kind: app_lifecycle
+        value: resumed
+        app: com.webos.app.home
+        source_span: "Launch home app"
+    actions:
+      - id: 1
+        intent: find
+        target:
+          role: container
+          match:
+            text: Recommended Line
+            key: null
+            index: null
+          container: null
+        source_span: "DATA: Check if Recommended Line is shown"
+    expected:
+      - kind: widget_visible
+        value: recommended_line
+        params: null
+        source_span: "EXPECTED: Recommended Line is shown on the first screen of home."
+
+  - id: 3
+    name: now_streaming_shown
+    preconditions:
+      - kind: app_lifecycle
+        value: resumed
+        app: com.webos.app.home
+        source_span: "Launch home app"
+    actions:
+      - id: 1
+        intent: find
+        target:
+          role: container
+          match:
+            text: Now Streaming
+            key: null
+            index: null
+          container: null
+        source_span: "DATA: Check if Now Streaming shelf is shown"
+    expected:
+      - kind: widget_visible
+        value: now_streaming
+        params: null
+        source_span: "EXPECTED: Now Streaming Shelf is shown on the first screen of home."
+
+  - id: 4
+    name: media_discovery_launch
+    preconditions:
+      - kind: app_lifecycle
+        value: resumed
+        app: com.webos.app.home
+        source_span: "1. Move to App List shelf"
+    actions:
+      - id: 1
+        intent: focus_move
+        target:
+          role: container
+          match:
+            text: App List
+            key: null
+            index: null
+          container: null
+        source_span: "1. Move to App List shelf"
+      - id: 2
+        intent: focus_move
+        target:
+          role: item
+          match:
+            text: Media Discovery App
+            key: null
+            index: null
+          container: App List
+        source_span: "2. Select Media Discovery App"
+      - id: 3
+        intent: key_press
+        key: OK
+        source_span: "2. Select Media Discovery App"
+    expected:
+      - kind: app_launch
+        value: media_discovery
+        params: null
+        source_span: "EXPECTED: Media Discovery App is launched."
+
+  - id: 5
+    name: live_tv_launch
+    preconditions:
+      - kind: app_lifecycle
+        value: resumed
+        app: com.webos.app.home
+        source_span: "1. Move to Recommend Line shelf"
+    actions:
+      - id: 1
+        intent: focus_move
+        target:
+          role: container
+          match:
+            text: Recommend Line
+            key: null
+            index: null
+          container: null
+        source_span: "1. Move to Recommend Line shelf"
+      - id: 2
+        intent: focus_move
+        target:
+          role: item
+          match:
+            text: Live TV
+            key: null
+            index: null
+          container: Recommend Line
+        source_span: "2. Select the Live TV tile"
+      - id: 3
+        intent: key_press
+        key: OK
+        source_span: "2. Select the Live TV tile"
+    expected:
+      - kind: app_launch
+        value: live_tv
+        params: null
+        source_span: "DATA: Check if Live TV channel is launched"
+      - kind: navigation
+        value: channel_change
+        params: null
+        source_span: "EXPECTED: Change to the selected channel."
+
+unresolved: []
