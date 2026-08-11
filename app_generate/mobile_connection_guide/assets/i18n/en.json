@@ -1,0 +1,44 @@
+{
+  "smartphone_share.guide.title": "Enjoy Smartphone Content",
+  "deviceType_01941": "Enjoy the screen or music from your smart phone on %deviceType% with the wide screen and immersive volume.",
+
+  "sn_home_0023": "Stream content from Android device",
+  "sn_home_0024": "Stream content from iPhone",
+  "deviceType_01942": "Cast music from smartphone to %deviceType% speaker",
+
+  "sn_home_0020": "Network settings are required to enjoy this app. Do you want to go to 'Network Settings' for internet connection?",
+  "sn_home_0083": "Yes",
+  "common.no": "No",
+  "deviceType_01948": "This service is not available in the country that your %deviceType% is set to.",
+
+  "sn_home_0026": "Go to Settings {%androidset_icon} > Connections > Wi-Fi, then turn on Wi-Fi.",
+  "sn_home_0027": "If the network is not connected on the phone, select your \"{%network name}\" to connect.",
+  "sn_home_0028": "Select {%casting_icon} icon on the top of the screen after opening YouTube app on the smart phone.",
+  "sn_home_0029": "You can use the same feature on iPhones or other apps if you see {%casting_icon} icon.",
+  "deviceType_01801": "Select LG %deviceType% from the list of devices found.",
+  "deviceType_01943": "If you cannot find your %deviceType% name, please agree to use terms after pressing Google Cast button.",
+  "sn_home_0032": "Google Cast",
+
+  "sn_home_0033": "Go to Settings {%iphoneset_icon} > Wi-Fi, then turn on Wi-Fi.",
+  "airplay.step1.secondary": "If the network is not connected on the phone, select your \"{%network name}\" to connect.",
+  "sn_home_0034": "Open Control Center by swiping down from the upper-right corner of the screen then select {%airplay_icon} icon.",
+  "deviceType_01944": "If an AirPlay passcode appears on your %deviceType%, enter the passcode on your iPhone.",
+
+  "deviceType_01793": "Play music from your Bluetooth-connected smartphone through the %deviceType% speakers.",
+  "soundshare.connect_hint": "Select the Bluetooth menu from your phone's settings to connect to this %deviceType%.",
+  "soundshare.device_name": "%deviceType% Name : {name}",
+  "sn_home_0086": "Recently Connected Device : {%Mobile_name}",
+  "sn_home_0037": "Connect",
+  "sn_home_0088": "Check the status of Bluetooth menu settings of your mobile device.",
+
+  "sn_home_0099": "Next",
+  "sn_home_0100": "Previous",
+  "sn_home_0084": "Done",
+  "common.close": "Close",
+
+  "sn_home_0096": "{total} items in total",
+  "sn_home_0097": "button",
+  "sn_home_0098": "Exit app",
+  "sn_home_0117": "Cast",
+  "sn_home_0118": "AirPlay"
+}
