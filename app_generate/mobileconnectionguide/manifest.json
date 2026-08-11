@@ -1,0 +1,149 @@
+{
+  "source_pdf": "mobileconnectionguide.pdf",
+  "total_pages": 11,
+  "mode": "whole_app",
+  "luna_api_docs_path": "/home/younginkim/project/2026/ai/skills/luna-api-docs",
+  "meta_pages": [
+    1
+  ],
+  "groups": [
+    {
+      "key": "5",
+      "name": "스마트폰 공유 가이드",
+      "folder": "groups/5-smartphone-share-guide",
+      "device_variant": "32\" StanbyME2",
+      "views": [
+        {
+          "id": "5",
+          "name": "스마트폰 공유 가이드 (진입 화면)",
+          "pages": [
+            2
+          ],
+          "reached_from": "home.card.mobile_connection",
+          "component_count": 4,
+          "integration_scenario_count": 7,
+          "skipped_scenario_count": 0
+        },
+        {
+          "id": "5.1",
+          "name": "스마트폰 공유 카드 > 메인 화면",
+          "pages": [
+            3
+          ],
+          "reached_from": "5",
+          "component_count": 5,
+          "integration_scenario_count": 11,
+          "skipped_scenario_count": 1
+        },
+        {
+          "id": "5.2-1",
+          "name": "Google Cast > 가이드 화면(1)",
+          "pages": [
+            4
+          ],
+          "reached_from": "5.1",
+          "component_count": 7,
+          "integration_scenario_count": 9,
+          "skipped_scenario_count": 0
+        },
+        {
+          "id": "5.2-2",
+          "name": "Google Cast > 가이드 화면(2)",
+          "pages": [
+            5
+          ],
+          "reached_from": "5.2-1",
+          "component_count": 6,
+          "integration_scenario_count": 6,
+          "skipped_scenario_count": 0
+        },
+        {
+          "id": "5.2-3",
+          "name": "Google Cast > 가이드 화면(3)",
+          "pages": [
+            6
+          ],
+          "reached_from": "5.2-2",
+          "component_count": 7,
+          "integration_scenario_count": 5,
+          "skipped_scenario_count": 1
+        },
+        {
+          "id": "5.3-1",
+          "name": "AirPlay > 가이드 화면(1)",
+          "pages": [
+            7
+          ],
+          "reached_from": "5.1",
+          "component_count": 7,
+          "integration_scenario_count": 6,
+          "skipped_scenario_count": 0
+        },
+        {
+          "id": "5.3-2",
+          "name": "AirPlay > 가이드 화면(2)",
+          "pages": [
+            8
+          ],
+          "reached_from": "5.3-1",
+          "component_count": 6,
+          "integration_scenario_count": 4,
+          "skipped_scenario_count": 0
+        },
+        {
+          "id": "5.3-3",
+          "name": "AirPlay > 가이드 화면(3)",
+          "pages": [
+            9
+          ],
+          "reached_from": "5.3-2",
+          "component_count": 6,
+          "integration_scenario_count": 4,
+          "skipped_scenario_count": 0
+        },
+        {
+          "id": "5.4",
+          "name": "사운드셰어 > 연결기기 있을 때",
+          "pages": [
+            10
+          ],
+          "reached_from": "5.1",
+          "component_count": 7,
+          "integration_scenario_count": 10,
+          "skipped_scenario_count": 3
+        },
+        {
+          "id": "5.5",
+          "name": "사운드셰어 > 연결기기 없을 때",
+          "pages": [
+            11
+          ],
+          "reached_from": "5.1",
+          "component_count": 6,
+          "integration_scenario_count": 7,
+          "skipped_scenario_count": 3
+        }
+      ],
+      "analyzed": true,
+      "analyzed_at": "2026-08-10T05:15:00Z",
+      "version": "1.0.0",
+      "modified": "2025.08.12",
+      "component_count": 61,
+      "unresolved_count": 16,
+      "integration_scenario_count": 69,
+      "skipped_scenario_count": 8
+    }
+  ],
+  "shared_files": {
+    "decisions": "decisions.yaml",
+    "navigation": "flows/navigation.yaml",
+    "i18n_keys": "shared/i18n-keys.yaml",
+    "voice_patterns": "shared/voice-patterns.yaml",
+    "app_overview": "app-overview.md",
+    "app_flow": "app-flow.yaml"
+  },
+  "luna_decision_count": 8,
+  "voice_pattern_count": 0,
+  "i18n_key_count": 30,
+  "last_updated": "2026-08-10T05:15:00Z"
+}

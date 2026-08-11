@@ -1,0 +1,744 @@
+# Integration (behavior) test scenarios — build/test loop consumes this.
+# Derived ONLY from behaviors.yaml + decisions.yaml + accessibility.yaml (NO Figma).
+# Visual asserts (size/font/color/position/radius/opacity) are the Figma stage's job.
+group_key: "5"
+source:
+  behaviors: groups/5-smartphone-share-guide/behaviors.yaml
+  decisions: decisions.yaml
+  accessibility: groups/5-smartphone-share-guide/accessibility.yaml
+deferred_figma_unit: true   # Figma 단계에서 시각 unit assert 추가 필요
+
+views:
+  # ==========================================================
+  - view: smartphone_share_guide
+    screen_id: "5"
+    target: SmartphoneShareGuideView
+    integration_scenarios:
+      - name: renders_title_and_description_from_i18n
+        source_ref: "behaviors#views[0].components[0..1].behaviors[0]"
+        assert:
+          - { kind: text_present, i18n_key: "smartphone_share.guide.title", fallback: "Enjoy Smartphone Content" }
+          - { kind: text_present, i18n_key: "deviceType_01941", fallback: "Enjoy the screen or music from your smart phone on %deviceType% with the wide screen and immersive volume." }
+        confidence: high
+
+      - name: renders_three_feature_cards
+        source_ref: "behaviors#views[0].components[2].behaviors[0]"
+        assert:
+          - { kind: widget_present, target: { by: key, value: featureCardList } }
+          - { kind: text_present, i18n_key: "sn_home_0023", fallback: "Stream content from Android device" }
+          - { kind: text_present, i18n_key: "sn_home_0024", fallback: "Stream content from iPhone" }
+          - { kind: text_present, i18n_key: "deviceType_01942", fallback: "Cast music from smartphone to %deviceType% speaker" }
+          - { kind: widget_at_index, target: { by: key, value: featureCardList }, index: 3, comparator: count_eq }
+        confidence: high
+
+      - name: title_is_not_focusable
+        source_ref: "behaviors#views[0].components[0] (선택 불가 영역)"
+        assert:
+          - { kind: action_disabled, target: { by: key, value: guideTitle } }
+        confidence: high
+
+      - name: announces_entry_guidance_with_total_items
+        source_ref: "accessibility#views[0].on_screen_enter (sn_home_0096/0097)"
+        assert:
+          - { kind: semantics_label, target: { by: key, value: smartphoneShareGuideRoot }, contains: ["Enjoy Smartphone Content", "3 items in total", "button"] }
+        confidence: high
+
+      - name: exit_icon_announces_exit_app
+        source_ref: "accessibility#views[0].on_focus[1] (sn_home_0098)"
+        act:
+          - { do: focus, target: { by: key, value: exitIcon } }
+        assert:
+          - { kind: semantics_label, target: { by: key, value: exitIcon }, contains: ["Exit app", "button"] }
+        confidence: high
+
+      - name: exit_icon_navigates_back
+        source_ref: "behaviors#views[0].components[3].behaviors[0]"
+        act:
+          - { do: focus, target: { by: key, value: exitIcon } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated_back }
+        confidence: low   # confirmed_by_user:false
+
+      - name: remote_back_exits_view_same_as_exit_icon
+        source_ref: "behaviors#views[0].screen.exit (리모컨 [Back] 버튼, 종료 아이콘)"
+        act:
+          - { do: press, key: BACK }
+        assert:
+          - { kind: navigated_back }
+        confidence: high
+
+  # ==========================================================
+  - view: smartphone_share_main
+    screen_id: "5.1"
+    target: SmartphoneShareMainView
+    integration_scenarios:
+      # --- card 1: Google Cast — one scenario per `when` ---
+      - name: cast_card_opens_google_cast_guide_when_network_ok
+        source_ref: "behaviors#views[1].components[0].behaviors[1].conditions[2]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.connectionmanager/getStatus":
+              { isInternetConnectionAvailable: true, wifi: { state: connected }, wired: { state: disconnected } }
+        act:
+          - { do: focus, target: { by: key, value: cardGoogleCast } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: service_called, uri: "luna://com.webos.service.connectionmanager/getStatus", params: { subscribe: true } }
+          - { kind: navigated, target: "view.5.2-1" }
+        confidence: high
+
+      - name: cast_card_shows_network_popup_when_offline
+        source_ref: "behaviors#views[1].components[0].behaviors[1].conditions[0]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.connectionmanager/getStatus":
+              { isInternetConnectionAvailable: false, wifi: { state: disconnected }, wired: { state: disconnected } }
+        act:
+          - { do: focus, target: { by: key, value: cardGoogleCast } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: widget_present, target: { by: key, value: networkRequiredPopup } }
+          - { kind: text_present, i18n_key: "sn_home_0020", fallback: "Network settings are required to enjoy this app. Do you want to go to 'Network Settings' for internet connection?" }
+          - { kind: no_navigation }
+        confidence: high
+
+      # --- card 2: AirPlay — same fork ---
+      - name: airplay_card_opens_airplay_guide_when_network_ok
+        source_ref: "behaviors#views[1].components[1].behaviors[1].conditions[2]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.connectionmanager/getStatus":
+              { isInternetConnectionAvailable: true, wired: { state: disconnected } }
+        act:
+          - { do: focus, target: { by: key, value: cardAirPlay } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated, target: "view.5.3-1" }
+        confidence: high
+
+      - name: airplay_card_shows_network_popup_when_offline
+        source_ref: "behaviors#views[1].components[1].behaviors[1].conditions[0]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.connectionmanager/getStatus":
+              { isInternetConnectionAvailable: false }
+        act:
+          - { do: focus, target: { by: key, value: cardAirPlay } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: widget_present, target: { by: key, value: networkRequiredPopup } }
+          - { kind: no_navigation }
+        confidence: high
+
+      # --- card 3: Sound Share — paired-device fork ---
+      - name: soundshare_card_opens_connected_view_when_paired_history_exists
+        source_ref: "behaviors#views[1].components[2].behaviors[1].conditions[0]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices":
+              { devices: [ { name: "Galaxy S24", address: "AA:BB:CC:DD:EE:FF" } ] }
+        act:
+          - { do: focus, target: { by: key, value: cardSoundShare } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: service_subscribed, uri: "luna://com.webos.service.bluetooth2/device/getPairedDevices" }
+          - { kind: navigated, target: "view.5.4" }
+        confidence: low   # confirmed_by_user:false
+
+      - name: soundshare_card_opens_no_device_view_when_no_paired_history
+        source_ref: "behaviors#views[1].components[2].behaviors[1].conditions[1]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices": { devices: [] }
+        act:
+          - { do: focus, target: { by: key, value: cardSoundShare } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated, target: "view.5.5" }
+        confidence: low
+
+      - name: soundshare_card_skips_network_popup_when_offline
+        source_ref: "behaviors#views[1].components[2].note (팝업은 카드 1/2 에만 적용)"
+        arrange:
+          stubs:
+            "luna://com.webos.service.connectionmanager/getStatus": { isInternetConnectionAvailable: false }
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices": { devices: [] }
+        act:
+          - { do: focus, target: { by: key, value: cardSoundShare } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: widget_absent, target: { by: key, value: networkRequiredPopup } }
+          - { kind: navigated, target: "view.5.5" }
+        confidence: low
+
+      # --- popup buttons ---
+      - name: popup_yes_launches_network_settings
+        source_ref: "behaviors#views[1].components[3].behaviors[1].conditions[0] / decisions#launch-network-settings"
+        arrange:
+          stubs:
+            "luna://com.webos.service.connectionmanager/getStatus": { isInternetConnectionAvailable: false }
+        act:
+          - { do: focus, target: { by: key, value: cardGoogleCast } }
+          - { do: press, key: OK }
+          - { do: select, item: "Yes" }
+        assert:
+          - { kind: service_called, uri: "luna://com.webos.service.applicationmanager/launch", params: { id: "com.webos.app.settings", params: { target: "network" } } }
+        confidence: high
+
+      - name: popup_no_closes_popup_without_navigating
+        source_ref: "behaviors#views[1].components[3].behaviors[1].conditions[1]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.connectionmanager/getStatus": { isInternetConnectionAvailable: false }
+        act:
+          - { do: focus, target: { by: key, value: cardGoogleCast } }
+          - { do: press, key: OK }
+          - { do: select, item: "No" }
+        assert:
+          - { kind: widget_absent, target: { by: key, value: networkRequiredPopup } }
+          - { kind: no_navigation }
+        confidence: low
+
+      - name: card_focus_order_is_cast_airplay_soundshare
+        source_ref: "components#views[1] focus_order 1,2,3"
+        assert:
+          - { kind: focus_order, targets: [cardGoogleCast, cardAirPlay, cardSoundShare] }
+        confidence: high
+
+      - name: focus_moves_right_from_cast_to_airplay
+        source_ref: "components#views[1] focus_order"
+        act:
+          - { do: focus, target: { by: key, value: cardGoogleCast } }
+          - { do: press, key: RIGHT }
+        assert:
+          - { kind: focus_moved, target: { by: key, value: cardAirPlay } }
+        confidence: high
+
+    skipped:
+      - name: service_unavailable_toast_on_unsupported_country
+        reason: "사용 가능 여부 판단 데이터 소스 미명세 (unresolved: service-availability-source)"
+
+  # ==========================================================
+  - view: google_cast_guide_step1
+    screen_id: "5.2-1"
+    target: GoogleCastGuideStep1View
+    integration_scenarios:
+      - name: renders_step_indicator_at_step_one_of_three
+        source_ref: "behaviors#views[2].components[0]"
+        assert:
+          - { kind: widget_present, target: { by: key, value: stepIndicator } }
+          - { kind: state_changed, field: "step", value: 1 }
+        confidence: high
+
+      - name: renders_title_and_primary_description_from_i18n
+        source_ref: "behaviors#views[2].components[1..3]"
+        assert:
+          - { kind: text_present, i18n_key: "sn_home_0023", fallback: "Stream content from Android device" }
+          - { kind: text_present, i18n_key: "sn_home_0026", fallback: "Go to Settings {%androidset_icon} > Connections > Wi-Fi, then turn on Wi-Fi." }
+          - { kind: widget_present, target: { by: key, value: guideImage } }
+        confidence: high
+
+      - name: shows_secondary_hint_when_not_wired
+        source_ref: "behaviors#views[2].components[4].behaviors[0].conditions[1]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.connectionmanager/getStatus":
+              { isInternetConnectionAvailable: true, wifi: { state: connected }, wired: { state: disconnected } }
+        assert:
+          - { kind: service_called, uri: "luna://com.webos.service.connectionmanager/getStatus", params: { subscribe: true } }
+          - { kind: widget_present, target: { by: key, value: secondaryHintText } }
+          - { kind: text_present, i18n_key: "sn_home_0027", fallback: "If the network is not connected on the phone, select your \"{%network name}\" to connect." }
+        confidence: high
+
+      - name: hides_secondary_hint_when_wired_connected
+        source_ref: "behaviors#views[2].components[4].behaviors[0].conditions[0] (유선 연결 시 미제공)"
+        arrange:
+          stubs:
+            "luna://com.webos.service.connectionmanager/getStatus":
+              { isInternetConnectionAvailable: true, wired: { state: connected, interfaceName: eth0 } }
+        assert:
+          - { kind: widget_absent, target: { by: key, value: secondaryHintText } }
+        confidence: high
+
+      - name: secondary_hint_updates_when_network_state_changes
+        source_ref: "decisions#network-status subscribe:true"
+        arrange:
+          stubs:
+            "luna://com.webos.service.connectionmanager/getStatus": { wired: { state: connected } }
+        act:
+          - { do: emit, uri: "luna://com.webos.service.connectionmanager/getStatus", event: { wired: { state: disconnected }, wifi: { state: connected } } }
+        assert:
+          - { kind: widget_present, target: { by: key, value: secondaryHintText } }
+        confidence: high
+
+      - name: next_button_has_default_focus
+        source_ref: "accessibility#views[2].initial_focus (Default Focus)"
+        assert:
+          - { kind: initial_focus, target: { by: key, value: nextButton } }
+          - { kind: text_present, i18n_key: "sn_home_0099", fallback: "Next" }
+        confidence: high
+
+      - name: next_navigates_to_step2
+        source_ref: "behaviors#views[2].components[5].behaviors[1]"
+        act:
+          - { do: focus, target: { by: key, value: nextButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated, target: "view.5.2-2" }
+        confidence: high
+
+      - name: previous_button_navigates_back
+        source_ref: "behaviors#views[2].components[6].behaviors[0]"
+        act:
+          - { do: focus, target: { by: key, value: previousButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated_back }
+        confidence: high
+
+      - name: remote_back_matches_previous_button
+        source_ref: "behaviors#views[0].screen.note (각 기능 진입 후 Back 동작은 공통 UX 정책에 따름)"
+        act:
+          - { do: press, key: BACK }
+        assert:
+          - { kind: navigated_back }
+        confidence: high
+
+  # ==========================================================
+  - view: google_cast_guide_step2
+    screen_id: "5.2-2"
+    target: GoogleCastGuideStep2View
+    integration_scenarios:
+      - name: renders_step_two_with_step_one_completed
+        source_ref: "behaviors#views[3].components[0]"
+        assert:
+          - { kind: state_changed, field: "step", value: 2 }
+          - { kind: state_changed, field: "completedSteps", value: [1] }
+        confidence: high
+
+      - name: renders_both_description_lines_from_i18n
+        source_ref: "behaviors#views[3].components[3]"
+        assert:
+          - { kind: text_present, i18n_key: "sn_home_0028", fallback: "Select {%casting_icon} icon on the top of the screen after opening YouTube app on the smart phone." }
+          - { kind: text_present, i18n_key: "sn_home_0029", fallback: "You can use the same feature on iPhones or other apps if you see {%casting_icon} icon." }
+        confidence: high
+
+      - name: casting_icon_announced_as_cast
+        source_ref: "accessibility#views[3].icon_utterance (sn_home_0117)"
+        assert:
+          - { kind: semantics_label, target: { by: key, value: descriptionText }, contains: ["Cast"] }
+        confidence: high
+
+      - name: next_button_has_default_focus
+        source_ref: "accessibility#views[3].initial_focus"
+        assert:
+          - { kind: initial_focus, target: { by: key, value: nextButton } }
+        confidence: high
+
+      - name: next_navigates_to_step3
+        source_ref: "behaviors#views[3].components[4].behaviors[1]"
+        act:
+          - { do: focus, target: { by: key, value: nextButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated, target: "view.5.2-3" }
+        confidence: high
+
+      - name: previous_navigates_back_to_step1
+        source_ref: "behaviors#views[3].components[5].behaviors[1]"
+        act:
+          - { do: focus, target: { by: key, value: previousButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated_back }
+          - { kind: text_present, i18n_key: "sn_home_0100", fallback: "Previous" }
+        confidence: high
+
+  # ==========================================================
+  - view: google_cast_guide_step3
+    screen_id: "5.2-3"
+    target: GoogleCastGuideStep3View
+    integration_scenarios:
+      - name: renders_step_three_with_two_completed
+        source_ref: "behaviors#views[4].components[0]"
+        assert:
+          - { kind: state_changed, field: "step", value: 3 }
+          - { kind: state_changed, field: "completedSteps", value: [1, 2] }
+        confidence: high
+
+      - name: renders_device_selection_description_from_i18n
+        source_ref: "behaviors#views[4].components[3]"
+        assert:
+          - { kind: text_present, i18n_key: "deviceType_01801", fallback: "Select LG %deviceType% from the list of devices found." }
+          - { kind: text_present, i18n_key: "deviceType_01943", fallback: "If you cannot find your %deviceType% name, please agree to use terms after pressing Google Cast button." }
+        confidence: high
+
+      - name: done_button_has_default_focus
+        source_ref: "accessibility#views[4].initial_focus (Done = Default Focus)"
+        assert:
+          - { kind: initial_focus, target: { by: key, value: doneButton } }
+          - { kind: text_present, i18n_key: "sn_home_0084", fallback: "Done" }
+        confidence: high
+
+      - name: done_closes_guide_and_returns_to_main
+        source_ref: "behaviors#views[4].components[5].behaviors[1] (가이드 화면 종료되고 이전 단계로 이동)"
+        act:
+          - { do: focus, target: { by: key, value: doneButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated, target: "view.5.1" }
+        confidence: high
+
+      - name: focus_order_is_previous_googlecast_done
+        source_ref: "accessibility#views[4].focus_order"
+        assert:
+          - { kind: focus_order, targets: [previousButton, googleCastButton, doneButton] }
+        confidence: low   # focus_order 는 목업 배치 추론 (unresolved: focus-order-derivation)
+
+    skipped:
+      - name: google_cast_button_launches_cast_app
+        reason: "Google Cast appId 미확정 — luna-api-docs grep 0건 (unresolved: google-cast-app-id). launch 호출은 확정이나 params.id 를 assert 할 수 없음"
+
+  # ==========================================================
+  - view: airplay_guide_step1
+    screen_id: "5.3-1"
+    target: AirPlayGuideStep1View
+    integration_scenarios:
+      - name: renders_step_one_title_and_description
+        source_ref: "behaviors#views[5].components[1..3]"
+        assert:
+          - { kind: state_changed, field: "step", value: 1 }
+          - { kind: text_present, i18n_key: "sn_home_0024", fallback: "Stream content from iPhone" }
+          - { kind: text_present, i18n_key: "sn_home_0033", fallback: "Go to Settings {%iphoneset_icon} > Wi-Fi, then turn on Wi-Fi." }
+        confidence: high
+
+      - name: shows_secondary_hint_when_not_wired
+        source_ref: "behaviors#views[5].components[4].behaviors[0].conditions[1]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.connectionmanager/getStatus": { wired: { state: disconnected }, wifi: { state: connected } }
+        assert:
+          - { kind: service_called, uri: "luna://com.webos.service.connectionmanager/getStatus", params: { subscribe: true } }
+          - { kind: widget_present, target: { by: key, value: secondaryHintText } }
+        confidence: low   # i18n 태그 미확정 (unresolved: airplay-step1-secondary-tag)
+
+      - name: hides_secondary_hint_when_wired_connected
+        source_ref: "behaviors#views[5].components[4].behaviors[0].conditions[0] (TV가 유선 연결 시 미제공)"
+        arrange:
+          stubs:
+            "luna://com.webos.service.connectionmanager/getStatus": { wired: { state: connected, interfaceName: eth0 } }
+        assert:
+          - { kind: widget_absent, target: { by: key, value: secondaryHintText } }
+        confidence: high
+
+      - name: next_button_has_default_focus
+        source_ref: "accessibility#views[5].initial_focus"
+        assert:
+          - { kind: initial_focus, target: { by: key, value: nextButton } }
+        confidence: high
+
+      - name: next_navigates_to_step2
+        source_ref: "behaviors#views[5].components[5].behaviors[1]"
+        act:
+          - { do: focus, target: { by: key, value: nextButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated, target: "view.5.3-2" }
+        confidence: high
+
+      - name: previous_navigates_back
+        source_ref: "behaviors#views[5].components[6].behaviors[0]"
+        act:
+          - { do: press, key: BACK }
+        assert:
+          - { kind: navigated_back }
+        confidence: high
+
+  # ==========================================================
+  - view: airplay_guide_step2
+    screen_id: "5.3-2"
+    target: AirPlayGuideStep2View
+    integration_scenarios:
+      - name: renders_step_two_with_step_one_completed
+        source_ref: "behaviors#views[6].components[0]"
+        assert:
+          - { kind: state_changed, field: "step", value: 2 }
+          - { kind: state_changed, field: "completedSteps", value: [1] }
+        confidence: high
+
+      - name: renders_control_center_description_from_i18n
+        source_ref: "behaviors#views[6].components[3]"
+        assert:
+          - { kind: text_present, i18n_key: "sn_home_0034", fallback: "Open Control Center by swiping down from the upper-right corner of the screen then select {%airplay_icon} icon." }
+        confidence: high
+
+      - name: airplay_icon_announced_as_airplay
+        source_ref: "accessibility#views[6].icon_utterance (sn_home_0118)"
+        assert:
+          - { kind: semantics_label, target: { by: key, value: descriptionText }, contains: ["AirPlay"] }
+        confidence: high
+
+      - name: next_navigates_to_step3
+        source_ref: "behaviors#views[6].components[4].behaviors[1]"
+        act:
+          - { do: focus, target: { by: key, value: nextButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: initial_focus, target: { by: key, value: nextButton } }
+          - { kind: navigated, target: "view.5.3-3" }
+        confidence: high
+
+  # ==========================================================
+  - view: airplay_guide_step3
+    screen_id: "5.3-3"
+    target: AirPlayGuideStep3View
+    integration_scenarios:
+      - name: renders_step_three_with_passcode_description
+        source_ref: "behaviors#views[7].components[0..3]"
+        assert:
+          - { kind: state_changed, field: "step", value: 3 }
+          - { kind: text_present, i18n_key: "deviceType_01801", fallback: "Select LG %deviceType% from the list of devices found." }
+          - { kind: text_present, i18n_key: "deviceType_01944", fallback: "If an AirPlay passcode appears on your %deviceType%, enter the passcode on your iPhone." }
+        confidence: high
+
+      - name: done_button_has_default_focus
+        source_ref: "accessibility#views[7].initial_focus"
+        assert:
+          - { kind: initial_focus, target: { by: key, value: doneButton } }
+        confidence: high
+
+      - name: done_closes_guide_and_returns_to_main
+        source_ref: "behaviors#views[7].components[4].behaviors[1]"
+        act:
+          - { do: focus, target: { by: key, value: doneButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated, target: "view.5.1" }
+        confidence: high
+
+      - name: previous_navigates_back
+        source_ref: "behaviors#views[7].components[5].behaviors[0]"
+        act:
+          - { do: focus, target: { by: key, value: previousButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated_back }
+        confidence: high
+
+  # ==========================================================
+  - view: sound_share_connected
+    screen_id: "5.4"
+    target: SoundShareConnectedView
+    integration_scenarios:
+      - name: renders_title_and_description_from_i18n
+        source_ref: "behaviors#views[8].components[0..2]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices":
+              { devices: [ { name: "Galaxy S24", address: "AA:BB:CC:DD:EE:FF" } ] }
+        assert:
+          - { kind: text_present, i18n_key: "deviceType_01942", fallback: "Cast music from smartphone to %deviceType% speaker" }
+          - { kind: text_present, i18n_key: "deviceType_01793", fallback: "Play music from your Bluetooth-connected smartphone through the %deviceType% speakers." }
+          - { kind: widget_present, target: { by: key, value: guideImage } }
+        confidence: high
+
+      - name: shows_recently_connected_device_name
+        source_ref: "behaviors#views[8].components[4].behaviors[0] (가장 최근에 연결한 기기명 제공)"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices":
+              { devices: [ { name: "Galaxy S24", address: "AA:BB:CC:DD:EE:FF" } ] }
+        assert:
+          - { kind: service_subscribed, uri: "luna://com.webos.service.bluetooth2/device/getPairedDevices" }
+          - { kind: widget_present, target: { by: key, value: recentDeviceLabel } }
+          - { kind: text_present, i18n_key: "sn_home_0086", fallback: "Recently Connected Device : {%Mobile_name}" }
+        confidence: low   # unresolved: recent-device-ordering
+
+      - name: connect_button_has_default_focus
+        source_ref: "accessibility#views[8].initial_focus (Default Focus item label = Connect)"
+        assert:
+          - { kind: initial_focus, target: { by: key, value: connectButton } }
+          - { kind: text_present, i18n_key: "sn_home_0037", fallback: "Connect" }
+        confidence: high
+
+      - name: announces_entry_guidance_with_default_focus_label
+        source_ref: "accessibility#views[8].on_screen_enter"
+        assert:
+          - { kind: semantics_label, target: { by: key, value: soundShareConnectedRoot }, contains: ["Cast music from smartphone", "Connect", "button"] }
+        confidence: high
+
+      # --- Connect: soundOut correction fork (sequence 1) ---
+      - name: connect_switches_soundout_to_device_speaker_when_bluetooth_selected
+        source_ref: "behaviors#views[8].components[6].behaviors[1].conditions[0] / decisions#soundout-get,soundout-set"
+        arrange:
+          stubs:
+            "luna://com.webos.service.audio/getSoundOutput": { soundOutput: "bt_soundbar" }
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices":
+              { devices: [ { name: "Galaxy S24", address: "AA:BB:CC:DD:EE:FF" } ] }
+            "luna://com.webos.service.bluetooth2/a2dp/connect": { returnValue: true }
+        act:
+          - { do: focus, target: { by: key, value: connectButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: service_called, uri: "luna://com.webos.service.audio/getSoundOutput" }
+          - { kind: service_called, uri: "luna://com.webos.service.audio/setSoundOutput", params: { soundOutput: "tv_speaker" } }
+        confidence: low   # unresolved: soundout-value-mapping
+
+      - name: connect_keeps_soundout_when_already_device_speaker
+        source_ref: "behaviors#views[8].components[6].behaviors[1].conditions[0] (조건 미충족 분기)"
+        arrange:
+          stubs:
+            "luna://com.webos.service.audio/getSoundOutput": { soundOutput: "tv_speaker" }
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices":
+              { devices: [ { name: "Galaxy S24", address: "AA:BB:CC:DD:EE:FF" } ] }
+            "luna://com.webos.service.bluetooth2/a2dp/connect": { returnValue: true }
+        act:
+          - { do: focus, target: { by: key, value: connectButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: service_called, uri: "luna://com.webos.service.audio/getSoundOutput" }
+          - { kind: service_called, uri: "luna://com.webos.service.bluetooth2/a2dp/connect", params: { address: "AA:BB:CC:DD:EE:FF" } }
+        confidence: low
+
+      # --- Connect: a2dp connect (sequence 2) ---
+      - name: connect_calls_a2dp_connect_with_recent_device_address
+        source_ref: "behaviors#views[8].components[6].behaviors[1].conditions[1] / decisions#bt-a2dp-connect"
+        arrange:
+          stubs:
+            "luna://com.webos.service.audio/getSoundOutput": { soundOutput: "tv_speaker" }
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices":
+              { devices: [ { name: "Galaxy S24", address: "AA:BB:CC:DD:EE:FF" } ] }
+            "luna://com.webos.service.bluetooth2/a2dp/connect": { returnValue: true }
+        act:
+          - { do: focus, target: { by: key, value: connectButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: service_called, uri: "luna://com.webos.service.bluetooth2/a2dp/connect", params: { address: "AA:BB:CC:DD:EE:FF" } }
+        confidence: high
+
+      - name: close_button_navigates_back
+        source_ref: "behaviors#views[8].components[5].behaviors[0]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices":
+              { devices: [ { name: "Galaxy S24", address: "AA:BB:CC:DD:EE:FF" } ] }
+        act:
+          - { do: focus, target: { by: key, value: closeButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated_back }
+        confidence: high
+
+      - name: remote_back_returns_to_main_view
+        source_ref: "behaviors#views[8].screen.exit (Back 시, 이전 화면(메인화면)으로 이동)"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices":
+              { devices: [ { name: "Galaxy S24", address: "AA:BB:CC:DD:EE:FF" } ] }
+        act:
+          - { do: press, key: BACK }
+        assert:
+          - { kind: navigated, target: "view.5.1" }
+        confidence: high
+
+      - name: focus_order_is_close_then_connect
+        source_ref: "accessibility#views[8].focus_order"
+        assert:
+          - { kind: focus_order, targets: [closeButton, connectButton] }
+        confidence: low
+
+    skipped:
+      - name: connect_launches_soundshare_play_scene
+        reason: "Sound Share appId / Play 씬 파라미터 미확정 (unresolved: soundshare-app-id). launch 호출은 확정이나 params.id 를 assert 할 수 없음"
+      - name: device_name_label_shows_stanbyme_name
+        reason: "기기 이름 조회 API 미특정 (unresolved: device-name-source)"
+      - name: connect_failure_handling
+        reason: "a2dp/connect 실패 시 동작이 5.4 에 미명세 (unresolved: connect-failure-handling)"
+
+  # ==========================================================
+  - view: sound_share_no_device
+    screen_id: "5.5"
+    target: SoundShareNoDeviceView
+    integration_scenarios:
+      - name: renders_when_no_paired_device_history
+        source_ref: "behaviors#views[9].screen.display_conditions[0]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices": { devices: [] }
+        assert:
+          - { kind: service_subscribed, uri: "luna://com.webos.service.bluetooth2/device/getPairedDevices" }
+          - { kind: widget_present, target: { by: key, value: soundShareNoDeviceRoot } }
+        confidence: low
+
+      - name: renders_title_and_both_description_lines
+        source_ref: "behaviors#views[9].components[0..2]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices": { devices: [] }
+        assert:
+          - { kind: text_present, i18n_key: "deviceType_01942", fallback: "Cast music from smartphone to %deviceType% speaker" }
+          - { kind: text_present, i18n_key: "deviceType_01793", fallback: "Play music from your Bluetooth-connected smartphone through the %deviceType% speakers." }
+        confidence: high
+
+      - name: does_not_show_recently_connected_device_label
+        source_ref: "behaviors#views[9] (5.4 대비 ux_tag:5 부재)"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices": { devices: [] }
+        assert:
+          - { kind: widget_absent, target: { by: key, value: recentDeviceLabel } }
+          - { kind: widget_absent, target: { by: key, value: connectButton } }
+        confidence: high
+
+      - name: close_button_has_default_focus
+        source_ref: "accessibility#views[9].initial_focus"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices": { devices: [] }
+        assert:
+          - { kind: initial_focus, target: { by: key, value: closeButton } }
+        confidence: low   # PDF에 Default Focus 명시 없음 (unresolved: default-focus-5.5)
+
+      - name: close_button_navigates_back
+        source_ref: "behaviors#views[9].components[4].behaviors[0]"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices": { devices: [] }
+        act:
+          - { do: focus, target: { by: key, value: closeButton } }
+          - { do: press, key: OK }
+        assert:
+          - { kind: navigated_back }
+        confidence: high
+
+      - name: remote_back_returns_to_share_main_view
+        source_ref: "behaviors#views[9].screen.exit (Back 시, 이전 화면(스마트폰 공유 Q카드 메인화면)으로 이동)"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices": { devices: [] }
+        act:
+          - { do: press, key: BACK }
+        assert:
+          - { kind: navigated, target: "view.5.1" }
+        confidence: high
+
+      - name: shows_view_when_paired_list_becomes_empty
+        source_ref: "decisions#bt-paired-devices subscribe:true"
+        arrange:
+          stubs:
+            "luna://com.webos.service.bluetooth2/device/getPairedDevices":
+              { devices: [ { name: "Galaxy S24", address: "AA:BB:CC:DD:EE:FF" } ] }
+        act:
+          - { do: emit, uri: "luna://com.webos.service.bluetooth2/device/getPairedDevices", event: { devices: [] } }
+        assert:
+          - { kind: widget_absent, target: { by: key, value: recentDeviceLabel } }
+        confidence: low
+
+    skipped:
+      - name: shows_toast_when_auto_connect_fails
+        reason: "자동 연결 실패 감지 채널 미명세 (unresolved: auto-connect-failure-channel). 토스트 문구 sn_home_0088 만 존재"
+      - name: shows_view_when_soundshare_disconnected
+        reason: "Sound Share 연결 해제 감지 구독 채널 미명세 (unresolved: disconnect-detection-channel)"
+      - name: stanbyme_name_label_renders
+        reason: "기기 이름 조회 API 미특정 (unresolved: device-name-source)"

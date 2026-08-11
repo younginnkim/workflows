@@ -1,0 +1,557 @@
+# ux_tag → figma_hint mapping. widget-from-figma / widget-finder consume this.
+# figma_hint is a HINT only — actual Figma node resolution is widget-from-figma's job.
+group_key: "5"
+
+# Repeating structures across views — implement once, reuse.
+shared_patterns:
+  - name: "WizardView"
+    natural: "해당 화면 동작성은 Pattern, Component의 Wizardview에 따름"
+    used_in: ["5.2-1", "5.2-2", "5.2-3", "5.3-1", "5.3-2", "5.3-3"]
+    structure:
+      - "step-indicator (top-center, completed steps → check icon)"
+      - "title-text (top-center)"
+      - "image (center, large rounded box)"
+      - "body-text (below image, optional secondary line)"
+      - "button row (bottom-center) — Next | Done | Google Cast"
+      - "button-with-chevron 'Previous' (top-left)"
+    visual_role: "wizard-page"
+
+  - name: "GuideDialog"
+    used_in: ["5", "5.1", "5.4", "5.5"]
+    structure:
+      - "title-text (top-center)"
+      - "body-text (below title)"
+      - "content area (cards | image)"
+      - "button row (bottom-center) — optional"
+    visual_role: "fullscreen-dialog"
+
+views:
+  - screen_id: "5"
+    name: "스마트폰 공유 가이드 (진입 화면)"
+    components:
+      - ux_tag: "1"
+        name: "타이틀 : 스마트폰 연결"
+        visual_role: "title-text"
+        figma_hint:
+          text_contains: ["Enjoy Smartphone Content"]
+          position: "top-center of dialog"
+        states: []
+        focusable: false
+
+      - ux_tag: "2"
+        name: "설명 문구"
+        visual_role: "body-text"
+        figma_hint:
+          text_contains: ["Enjoy the screen or music from your smart phone", "immersive volume"]
+          position: "below title, 2 lines centered"
+        states: []
+        focusable: false
+
+      - ux_tag: "3"
+        name: "기능 버튼 모음"
+        visual_role: "card-list-horizontal"
+        figma_hint:
+          layer_name_contains: ["card", "button"]
+          position: "center of dialog, 3 cards in a row"
+          child_count: 3
+          has_icon: true
+        states: []
+        focusable: true
+        focus_order: 1
+        children:
+          - { visual_role: "image-card-with-label", text_contains: ["Stream content from Android device"], has_icon: "google_cast" }
+          - { visual_role: "image-card-with-label", text_contains: ["Stream content from iPhone"], has_icon: "airplay" }
+          - { visual_role: "image-card-with-label", text_contains: ["Cast music from smartphone"], has_icon: "tv_phone_wireless" }
+
+      - ux_tag: "exit_icon"
+        name: "종료 아이콘"
+        visual_role: "icon-button"
+        figma_hint:
+          layer_name_contains: ["close", "exit", "x"]
+          position: "top-right of dialog"
+          has_icon: true
+        states: []
+        focusable: true
+        focus_order: 2
+
+  - screen_id: "5.1"
+    name: "스마트폰 공유 카드 > 메인 화면"
+    note: "5와 동일 목업. 카드별 개별 동작 명세."
+    components:
+      - ux_tag: "1"
+        name: "Stream content from Android device (Google Cast)"
+        visual_role: "image-card-with-label"
+        figma_hint:
+          text_contains: ["Stream content from Android device"]
+          position: "first card of 3-card row"
+          has_icon: true
+          icon_hint: "Google Cast logo"
+        states: ["normal", "network_disconnected", "service_unavailable"]
+        focusable: true
+        focus_order: 1
+
+      - ux_tag: "2"
+        name: "Stream content from iPhone (AirPlay)"
+        visual_role: "image-card-with-label"
+        figma_hint:
+          text_contains: ["Stream content from iPhone"]
+          position: "second card of 3-card row"
+          has_icon: true
+          icon_hint: "AirPlay logo"
+        states: ["normal", "network_disconnected", "service_unavailable"]
+        focusable: true
+        focus_order: 2
+
+      - ux_tag: "3"
+        name: "Cast music from smartphone to %deviceType% speaker (Sound Share)"
+        visual_role: "image-card-with-label"
+        figma_hint:
+          text_contains: ["Cast music from smartphone", "speaker"]
+          position: "third card of 3-card row"
+          has_icon: true
+          icon_hint: "TV + phone with wireless waves"
+        states: ["has_paired_device", "no_paired_device"]
+        focusable: true
+        focus_order: 3
+
+      - ux_tag: "toast.service_unavailable"
+        name: "서비스 미지원 국가 토스트"
+        visual_role: "toast"
+        figma_hint:
+          text_contains: ["This service is not available in the country"]
+          position: "right side / bottom-right overlay"
+        states: []
+        focusable: false
+
+      - ux_tag: "popup.network_required"
+        name: "네트워크 설정 필요 팝업"
+        visual_role: "confirm-popup"
+        figma_hint:
+          text_contains: ["Network settings are required to enjoy this app", "Yes", "No"]
+          position: "modal overlay, center"
+          child_count: 2
+        states: []
+        focusable: true
+        children:
+          - { visual_role: "button", text_contains: ["Yes"], focus_order: 1 }
+          - { visual_role: "button", text_contains: ["No"], focus_order: 2 }
+
+  - screen_id: "5.2-1"
+    name: "Google Cast > 가이드 화면(1)"
+    uses_pattern: "WizardView"
+    components:
+      - ux_tag: "1"
+        name: "단계 인디케이터"
+        visual_role: "step-indicator"
+        figma_hint: { text_contains: ["1", "2", "3"], position: "top-center", child_count: 3 }
+        states: ["step1_active"]
+        focusable: false
+      - ux_tag: "2"
+        name: "타이틀"
+        visual_role: "title-text"
+        figma_hint: { text_contains: ["Stream content from Android device"], position: "top-center below indicator" }
+        states: []
+        focusable: false
+      - ux_tag: "3"
+        name: "설명 이미지"
+        visual_role: "image"
+        figma_hint: { layer_name_contains: ["image", "illust"], position: "center, large rounded rectangle" }
+        states: []
+        focusable: false
+      - ux_tag: "4"
+        name: "설명 문구"
+        visual_role: "body-text"
+        figma_hint: { text_contains: ["Go to Settings", "Connections", "Wi-Fi"], position: "below image" }
+        states: []
+        focusable: false
+      - ux_tag: "4-1"
+        name: "설명 보조 문구"
+        visual_role: "body-text-secondary"
+        figma_hint: { text_contains: ["If the network is not connected on the phone"], position: "below 4, smaller/dimmer" }
+        states: ["visible_wireless", "hidden_wired"]
+        focusable: false
+      - ux_tag: "5"
+        name: "Next 버튼"
+        visual_role: "button"
+        figma_hint: { text_contains: ["Next"], position: "bottom-center" }
+        states: ["focused_default"]
+        focusable: true
+        focus_order: 2
+        default_focus: true
+      - ux_tag: "6"
+        name: "[Previous] 버튼"
+        visual_role: "button-with-chevron"
+        figma_hint: { text_contains: ["Previous"], position: "top-left", has_icon: true, icon_hint: "chevron-left" }
+        states: []
+        focusable: true
+        focus_order: 1
+
+  - screen_id: "5.2-2"
+    name: "Google Cast > 가이드 화면(2)"
+    uses_pattern: "WizardView"
+    components:
+      - ux_tag: "1"
+        name: "페이지 인디케이터"
+        visual_role: "step-indicator"
+        figma_hint: { position: "top-center", note: "step1 → check icon, step2 active" }
+        states: ["step1_done", "step2_active"]
+        focusable: false
+      - ux_tag: "2"
+        name: "타이틀"
+        visual_role: "title-text"
+        figma_hint: { text_contains: ["Stream content from Android device"], position: "top-center" }
+        states: []
+        focusable: false
+      - ux_tag: "3"
+        name: "설명 이미지"
+        visual_role: "image"
+        figma_hint: { position: "center, large rounded rectangle" }
+        states: []
+        focusable: false
+      - ux_tag: "4"
+        name: "설명 문구"
+        visual_role: "body-text"
+        figma_hint: { text_contains: ["icon on the top of the screen", "YouTube app"], position: "below image, 2 lines" }
+        states: []
+        focusable: false
+      - ux_tag: "5"
+        name: "Next 버튼"
+        visual_role: "button"
+        figma_hint: { text_contains: ["Next"], position: "bottom-center" }
+        states: ["focused_default"]
+        focusable: true
+        focus_order: 2
+        default_focus: true
+      - ux_tag: "6"
+        name: "Previous 버튼"
+        visual_role: "button-with-chevron"
+        figma_hint: { text_contains: ["Previous"], position: "top-left", has_icon: true }
+        states: []
+        focusable: true
+        focus_order: 1
+
+  - screen_id: "5.2-3"
+    name: "Google Cast > 가이드 화면(3)"
+    uses_pattern: "WizardView"
+    components:
+      - ux_tag: "1"
+        name: "페이지 인디케이터"
+        visual_role: "step-indicator"
+        figma_hint: { position: "top-center", note: "step1,2 → check icon, step3 active" }
+        states: ["step1_done", "step2_done", "step3_active"]
+        focusable: false
+      - ux_tag: "2"
+        name: "타이틀"
+        visual_role: "title-text"
+        figma_hint: { text_contains: ["Stream content from Android device"], position: "top-center" }
+        states: []
+        focusable: false
+      - ux_tag: "3"
+        name: "설명 이미지"
+        visual_role: "image"
+        figma_hint: { position: "center, large rounded rectangle" }
+        states: []
+        focusable: false
+      - ux_tag: "4"
+        name: "설명 문구"
+        visual_role: "body-text"
+        figma_hint: { text_contains: ["Select LG", "from the list of devices found"], position: "below image, 2 lines" }
+        states: []
+        focusable: false
+      - ux_tag: "5"
+        name: "구글캐스트로 이동 버튼"
+        visual_role: "button"
+        figma_hint: { text_contains: ["Google Cast"], position: "bottom-center, left of Done", note: "secondary/gray style" }
+        states: []
+        focusable: true
+        focus_order: 2
+      - ux_tag: "6"
+        name: "Done 버튼"
+        visual_role: "button"
+        figma_hint: { text_contains: ["Done"], position: "bottom-center, right of Google Cast", note: "primary/white style" }
+        states: ["focused_default"]
+        focusable: true
+        focus_order: 3
+        default_focus: true
+      - ux_tag: "7"
+        name: "Previous 버튼"
+        visual_role: "button-with-chevron"
+        figma_hint: { text_contains: ["Previous"], position: "top-left", has_icon: true }
+        states: []
+        focusable: true
+        focus_order: 1
+
+  - screen_id: "5.3-1"
+    name: "AirPlay > 가이드 화면(1)"
+    uses_pattern: "WizardView"
+    components:
+      - ux_tag: "1"
+        name: "단계 인디케이터"
+        visual_role: "step-indicator"
+        figma_hint: { text_contains: ["1", "2", "3"], position: "top-center" }
+        states: ["step1_active"]
+        focusable: false
+      - ux_tag: "2"
+        name: "타이틀"
+        visual_role: "title-text"
+        figma_hint: { text_contains: ["Stream content from iPhone"], position: "top-center" }
+        states: []
+        focusable: false
+      - ux_tag: "3"
+        name: "설명 이미지"
+        visual_role: "image"
+        figma_hint: { position: "center, large rounded rectangle" }
+        states: []
+        focusable: false
+      - ux_tag: "4"
+        name: "설명 문구"
+        visual_role: "body-text"
+        figma_hint: { text_contains: ["Go to Settings", "Wi-Fi, then turn on Wi-Fi"], position: "below image" }
+        states: []
+        focusable: false
+      - ux_tag: "4-1"
+        name: "설명 보조 문구"
+        visual_role: "body-text-secondary"
+        figma_hint: { text_contains: ["If the network is not connected on the phone"], position: "below 4" }
+        states: ["visible_wireless", "hidden_wired"]
+        focusable: false
+      - ux_tag: "5"
+        name: "Next 버튼"
+        visual_role: "button"
+        figma_hint: { text_contains: ["Next"], position: "bottom-center" }
+        states: ["focused_default"]
+        focusable: true
+        focus_order: 2
+        default_focus: true
+      - ux_tag: "6"
+        name: "[Previous] 버튼"
+        visual_role: "button-with-chevron"
+        figma_hint: { text_contains: ["Previous"], position: "top-left", has_icon: true }
+        states: []
+        focusable: true
+        focus_order: 1
+
+  - screen_id: "5.3-2"
+    name: "AirPlay > 가이드 화면(2)"
+    uses_pattern: "WizardView"
+    components:
+      - ux_tag: "1"
+        name: "페이지 인디케이터"
+        visual_role: "step-indicator"
+        figma_hint: { position: "top-center" }
+        states: ["step1_done", "step2_active"]
+        focusable: false
+      - ux_tag: "2"
+        name: "타이틀"
+        visual_role: "title-text"
+        figma_hint: { text_contains: ["Stream content from iPhone"], position: "top-center" }
+        states: []
+        focusable: false
+      - ux_tag: "3"
+        name: "설명 이미지"
+        visual_role: "image"
+        figma_hint: { position: "center, large rounded rectangle" }
+        states: []
+        focusable: false
+      - ux_tag: "4"
+        name: "설명 문구"
+        visual_role: "body-text"
+        figma_hint: { text_contains: ["Open Control Center by swiping down"], position: "below image, 2 lines" }
+        states: []
+        focusable: false
+      - ux_tag: "5"
+        name: "Next 버튼"
+        visual_role: "button"
+        figma_hint: { text_contains: ["Next"], position: "bottom-center" }
+        states: ["focused_default"]
+        focusable: true
+        focus_order: 2
+        default_focus: true
+      - ux_tag: "6"
+        name: "Previous 버튼"
+        visual_role: "button-with-chevron"
+        figma_hint: { text_contains: ["Previous"], position: "top-left", has_icon: true }
+        states: []
+        focusable: true
+        focus_order: 1
+
+  - screen_id: "5.3-3"
+    name: "AirPlay > 가이드 화면(3)"
+    uses_pattern: "WizardView"
+    components:
+      - ux_tag: "1"
+        name: "페이지 인디케이터"
+        visual_role: "step-indicator"
+        figma_hint: { position: "top-center" }
+        states: ["step1_done", "step2_done", "step3_active"]
+        focusable: false
+      - ux_tag: "2"
+        name: "타이틀"
+        visual_role: "title-text"
+        figma_hint: { text_contains: ["Stream content from iPhone"], position: "top-center" }
+        states: []
+        focusable: false
+      - ux_tag: "3"
+        name: "설명 이미지"
+        visual_role: "image"
+        figma_hint: { position: "center, large rounded rectangle" }
+        states: []
+        focusable: false
+      - ux_tag: "4"
+        name: "설명 문구"
+        visual_role: "body-text"
+        figma_hint: { text_contains: ["Select LG", "AirPlay passcode"], position: "below image, 2 lines" }
+        states: []
+        focusable: false
+      - ux_tag: "5"
+        name: "Done 버튼"
+        visual_role: "button"
+        figma_hint: { text_contains: ["Done"], position: "bottom-center" }
+        states: ["focused_default"]
+        focusable: true
+        focus_order: 2
+        default_focus: true
+      - ux_tag: "6"
+        name: "Previous 버튼"
+        visual_role: "button-with-chevron"
+        figma_hint: { text_contains: ["Previous"], position: "top-left", has_icon: true }
+        states: []
+        focusable: true
+        focus_order: 1
+
+  - screen_id: "5.4"
+    name: "사운드셰어 > 연결기기 있을 때"
+    uses_pattern: "GuideDialog"
+    components:
+      - ux_tag: "1"
+        name: "타이틀"
+        visual_role: "title-text"
+        figma_hint: { text_contains: ["Cast music from smartphone", "speaker"], position: "top-center" }
+        states: []
+        focusable: false
+      - ux_tag: "2"
+        name: "관련 이미지 (StanbyME 이름 제공)"
+        visual_role: "image"
+        figma_hint: { layer_name_contains: ["GUI", "image"], position: "center, large rounded rectangle" }
+        states: []
+        focusable: false
+      - ux_tag: "3"
+        name: "설명 문구"
+        visual_role: "body-text"
+        figma_hint: { text_contains: ["Play music from your Bluetooth-connected smartphone"], position: "below image" }
+        states: []
+        focusable: false
+      - ux_tag: "4"
+        name: "기기 이름"
+        visual_role: "label-value-text"
+        figma_hint: { text_contains: ["Name :"], position: "below description, right of 3" }
+        states: []
+        focusable: false
+      - ux_tag: "5"
+        name: "연결 이력 있는 기기 이름"
+        visual_role: "label-value-text"
+        figma_hint: { text_contains: ["Recently Connected Device :"], position: "below 4" }
+        states: ["has_history"]
+        focusable: false
+      - ux_tag: "6"
+        name: "[닫기] 버튼"
+        visual_role: "button"
+        figma_hint: { text_contains: ["Close"], position: "bottom-center left of Connect", note: "secondary/gray style" }
+        states: []
+        focusable: true
+        focus_order: 1
+      - ux_tag: "7"
+        name: "[연결하기] 버튼"
+        visual_role: "button"
+        figma_hint: { text_contains: ["Connect"], position: "bottom-center right", note: "primary/white style" }
+        states: ["focused_default"]
+        focusable: true
+        focus_order: 2
+        default_focus: true
+
+  - screen_id: "5.5"
+    name: "사운드셰어 > 연결기기 없을 때"
+    uses_pattern: "GuideDialog"
+    components:
+      - ux_tag: "1"
+        name: "타이틀"
+        visual_role: "title-text"
+        figma_hint: { text_contains: ["Cast music from smartphone", "speaker"], position: "top-center" }
+        states: []
+        focusable: false
+      - ux_tag: "2"
+        name: "관련 이미지 (StanbyME 이름 제공)"
+        visual_role: "image"
+        figma_hint: { layer_name_contains: ["GUI", "image"], position: "center, large rounded rectangle" }
+        states: []
+        focusable: false
+      - ux_tag: "3"
+        name: "설명 문구"
+        visual_role: "body-text"
+        figma_hint: { text_contains: ["Play music from your Bluetooth-connected smartphone", "Select the Bluetooth menu"], position: "below image, 2 lines" }
+        states: []
+        focusable: false
+      - ux_tag: "4"
+        name: "StanbyME 이름"
+        visual_role: "label-value-text"
+        figma_hint: { text_contains: ["Name :"], position: "below description" }
+        states: []
+        focusable: false
+      - ux_tag: "5"
+        name: "[닫기] 버튼"
+        visual_role: "button"
+        figma_hint: { text_contains: ["Close"], position: "bottom-center", note: "only focusable element on this view" }
+        states: ["focused_default"]
+        focusable: true
+        focus_order: 1
+        default_focus: true
+        default_focus_confirmed: false
+      - ux_tag: "toast.bluetooth_check"
+        name: "블루투스 설정 확인 토스트"
+        visual_role: "toast"
+        figma_hint: { text_contains: ["Check the status of Bluetooth menu settings"], position: "bottom-right overlay" }
+        states: ["auto_connect_failed"]
+        focusable: false
+
+# ---- Self-check: ux_tag count vs numbered tags visible in each mockup ----
+self_check:
+  - screen_id: "5"
+    numbered_tags_in_mockup: 3       # ①②③
+    ux_tag_entries: 4                # + exit_icon (derived from [추가 설명], not numbered)
+    status: "OK — exit_icon 은 번호 태그가 아닌 [추가 설명]에서 도출"
+  - screen_id: "5.1"
+    numbered_tags_in_mockup: 3       # ②③ visible; ① implied on first card (목업에 미표기)
+    ux_tag_entries: 5                # + popup, toast (from [추가 설명])
+    status: "NOTE — 목업에 ① 표기 누락(카드1). 스펙 표에는 1,2,3 모두 기술됨"
+  - screen_id: "5.2-1"
+    numbered_tags_in_mockup: 7       # ①②③④④-1⑤⑥
+    ux_tag_entries: 7
+    status: "OK"
+  - screen_id: "5.2-2"
+    numbered_tags_in_mockup: 6
+    ux_tag_entries: 6
+    status: "OK"
+  - screen_id: "5.2-3"
+    numbered_tags_in_mockup: 7
+    ux_tag_entries: 7
+    status: "OK"
+  - screen_id: "5.3-1"
+    numbered_tags_in_mockup: 7       # ①②③④④-1⑤⑥
+    ux_tag_entries: 7
+    status: "OK"
+  - screen_id: "5.3-2"
+    numbered_tags_in_mockup: 6
+    ux_tag_entries: 6
+    status: "OK"
+  - screen_id: "5.3-3"
+    numbered_tags_in_mockup: 6
+    ux_tag_entries: 6
+    status: "OK"
+  - screen_id: "5.4"
+    numbered_tags_in_mockup: 5       # ①②③④⑤ (⑥⑦은 스펙 표에만, 목업 버튼에 번호 미표기)
+    ux_tag_entries: 7
+    status: "NOTE — 목업의 Close/Connect 버튼에 ⑥⑦ 번호 미표기, 스펙 표에는 기술됨"
+  - screen_id: "5.5"
+    numbered_tags_in_mockup: 5       # ①②③④⑤
+    ux_tag_entries: 6                # + toast (from [추가 설명])
+    status: "OK — toast 는 [추가 설명]에서 도출"

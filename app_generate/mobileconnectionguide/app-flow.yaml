@@ -1,0 +1,140 @@
+# Machine-readable app-wide flow. Consumed alongside flows/navigation.yaml.
+app:
+  name: "스마트폰 공유 가이드 (Smartphone Share Guide)"
+  device_variant: "32\" StanbyME2"
+  source:
+    pdf: "mobileconnectionguide.pdf"
+    version: "1.0.0"
+    modified: "2025.08.12"
+    total_pages: 11
+    analyzed_pages: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    meta_pages: [1]          # 표지
+  scope_note: >
+    이 PDF는 상위 시나리오 문서의 chapter 5 발췌본. 앱 전체가 아니라
+    단일 연결 view 그룹(챕터 5)만 포함하므로 group_flow 는 그룹 내부 흐름을 기술.
+  entry_points:
+    - view: "5"
+      condition: "홈에서 '모바일 연결하기' 카드 선택 (deep_link)"
+
+groups:
+  - key: "5"
+    name: "스마트폰 공유 가이드"
+    folder: "groups/5-smartphone-share-guide"
+    views: ["5", "5.1", "5.2-1", "5.2-2", "5.2-3", "5.3-1", "5.3-2", "5.3-3", "5.4", "5.5"]
+
+# 그룹 내 3개 기능 분기 (Google Cast / AirPlay / Sound Share)
+feature_branches:
+  - name: "Google Cast"
+    entry_card: "5.1 ux_tag:1"
+    views: ["5.2-1", "5.2-2", "5.2-3"]
+    pattern: WizardView
+    steps: 3
+    requires_network: true
+  - name: "AirPlay"
+    entry_card: "5.1 ux_tag:2"
+    views: ["5.3-1", "5.3-2", "5.3-3"]
+    pattern: WizardView
+    steps: 3
+    requires_network: true
+  - name: "Sound Share"
+    entry_card: "5.1 ux_tag:3"
+    views: ["5.4", "5.5"]
+    pattern: GuideDialog
+    steps: 1
+    requires_network: false
+    state_fork: "paired_devices.length > 0 ? 5.4 : 5.5"
+
+shared_components:
+  - name: "WizardView"
+    visual_role: "wizard-page"
+    used_in_views: ["5.2-1", "5.2-2", "5.2-3", "5.3-1", "5.3-2", "5.3-3"]
+    natural: "해당 화면 동작성은 Pattern, Component의 Wizardview에 따름"
+    structure: ["step-indicator", "title-text", "image", "body-text(+secondary)", "button row", "Previous(top-left)"]
+  - name: "GuideDialog"
+    visual_role: "fullscreen-dialog"
+    used_in_views: ["5", "5.1", "5.4", "5.5"]
+  - name: "Previous 버튼"
+    visual_role: "button-with-chevron"
+    used_in_views: ["5.2-1", "5.2-2", "5.2-3", "5.3-1", "5.3-2", "5.3-3"]
+    i18n_key: "sn_home_0100"
+  - name: "Next 버튼"
+    visual_role: "button"
+    used_in_views: ["5.2-1", "5.2-2", "5.3-1", "5.3-2"]
+    i18n_key: "sn_home_0099"
+  - name: "Done 버튼"
+    visual_role: "button"
+    used_in_views: ["5.2-3", "5.3-3"]
+    i18n_key: "sn_home_0084"
+  - name: "네트워크 설정 필요 팝업"
+    visual_role: "confirm-popup"
+    used_in_views: ["5.1"]
+    applies_to_cards: ["ux_tag:1", "ux_tag:2"]
+
+group_flow:
+  - from: "5"
+    to: "5.1"
+    trigger: "동일 화면 (진입 화면 = 메인 화면)"
+    impl_type: same_screen
+    unresolved_ref: "view5-vs-view5.1-relation"
+  - from: "5.1"
+    to: "5.2-1"
+    trigger: "on_select Google Cast 카드"
+    impl_type: navigate_internal
+  - from: "5.1"
+    to: "5.3-1"
+    trigger: "on_select AirPlay 카드"
+    impl_type: navigate_internal
+  - from: "5.1"
+    to: "5.4 | 5.5"
+    trigger: "on_select Sound Share 카드 (연결 이력 유무로 분기)"
+    impl_type: navigate_internal
+
+# 그룹 외부로 나가는 점프
+external_jumps:
+  - to: "settings.network"
+    from: "5.1 popup.network_required"
+    impl_type: luna_call
+    decision_ref: launch-network-settings
+  - to: "app.google_cast"
+    from: "5.2-3"
+    impl_type: luna_call
+    decision_ref: launch-google-cast
+    unresolved_ref: "google-cast-app-id"
+  - to: "app.sound_share.play"
+    from: "5.4"
+    impl_type: luna_call
+    decision_ref: soundshare-stream-out
+    unresolved_ref: "soundshare-app-id"
+
+# 앱 전체에서 쓰이는 Luna 서비스 요약
+luna_services_used:
+  - service: "com.webos.service.connectionmanager"
+    methods: ["getStatus"]
+    subscribe: true
+    used_in_views: ["5.1", "5.2-1", "5.3-1"]
+  - service: "com.webos.service.bluetooth2"
+    methods: ["device/getPairedDevices", "a2dp/connect"]
+    subscribe: true
+    used_in_views: ["5.1", "5.4", "5.5"]
+  - service: "com.webos.service.audio"
+    methods: ["getSoundOutput", "setSoundOutput"]
+    subscribe: false
+    used_in_views: ["5.4"]
+  - service: "com.webos.service.applicationmanager"
+    methods: ["launch"]
+    subscribe: false
+    used_in_views: ["5.1", "5.2-3", "5.4"]
+
+external_references:
+  - name: "Mobile Connection 시나리오"
+    referenced_by: ["5.4", "5.5"]
+    natural: "그 외 동작 관련 상세 내용은 Mobile Connection 시나리오 참조"
+  - name: "Settings_Sound 시나리오"
+    referenced_by: ["5.4"]
+    natural: "세부 내용은 Settings_Sound 시나리오 참고"
+  - name: "Pattern, Component - Wizardview"
+    referenced_by: ["5.2-1", "5.2-3"]
+    natural: "해당 화면 동작성은 Pattern, Component의 Wizardview에 따름"
+  - name: "공통 UX 정책 (Back 동작)"
+    referenced_by: ["5"]
+    natural: "각 기능 진입 후 Back 동작은 공통 UX 정책에 따름"

@@ -1,0 +1,261 @@
+# String tag catalog (cumulative). Tags prefixed sn_home_ / deviceType_ come from the PDF (from_pdf).
+source_pdf: "mobileconnectionguide.pdf"
+
+keys:
+  # ---- titles / descriptions ----
+  - key: "smartphone_share.guide.title"
+    fallback: "Enjoy Smartphone Content"
+    source: auto_generated
+    screen: "5"
+    ux_tag: "1"
+    context: "스마트폰 공유 가이드 진입 화면 타이틀 (PDF에 문구태그 미표기)"
+
+  - key: "deviceType_01941"
+    fallback: "Enjoy the screen or music from your smart phone on %deviceType% with the wide screen and immersive volume."
+    source: from_pdf
+    screen: "5"
+    ux_tag: "2"
+    placeholders: ["%deviceType%"]
+    context: "진입 화면 설명 문구"
+
+  # ---- feature card labels (shared across 5 / 5.1 / guides) ----
+  - key: "sn_home_0023"
+    fallback: "Stream content from Android device"
+    source: from_pdf
+    screen: ["5", "5.1", "5.2-1", "5.2-2", "5.2-3"]
+    ux_tag: ["3", "1", "2"]
+    context: "Google Cast 카드 라벨 + Google Cast 가이드 3화면 공통 타이틀"
+
+  - key: "sn_home_0024"
+    fallback: "Stream content from iPhone"
+    source: from_pdf
+    screen: ["5", "5.1", "5.3-1", "5.3-2", "5.3-3"]
+    ux_tag: ["3", "2"]
+    context: "AirPlay 카드 라벨 + AirPlay 가이드 3화면 공통 타이틀"
+
+  - key: "deviceType_01942"
+    fallback: "Cast music from smartphone to %deviceType% speaker"
+    source: from_pdf
+    screen: ["5", "5.1", "5.4", "5.5"]
+    ux_tag: ["3", "1"]
+    placeholders: ["%deviceType%"]
+    context: "Sound Share 카드 라벨 + 사운드셰어 화면 타이틀"
+
+  # ---- network popup ----
+  - key: "sn_home_0020"
+    fallback: "Network settings are required to enjoy this app. Do you want to go to 'Network Settings' for internet connection?"
+    source: from_pdf
+    screen: "5.1"
+    ux_tag: "popup.network_required"
+    context: "네트워크 미연결 시 확인 팝업 본문"
+
+  - key: "sn_home_0083"
+    fallback: "Yes / No"
+    source: from_pdf
+    screen: "5.1"
+    ux_tag: "popup.network_required"
+    context: "팝업 버튼 라벨 — Yes/No 1:1 대응 불명 (unresolved: yes-no-i18n-tags)"
+    unresolved: true
+
+  - key: "deviceType_01948"
+    fallback: "This service is not available in the country that your %deviceType% is set to."
+    source: from_pdf
+    screen: "5.1"
+    ux_tag: "toast.service_unavailable"
+    placeholders: ["%deviceType%"]
+    context: "미지원 국가 등으로 Google Cast/AirPlay 사용 불가 시 토스트"
+
+  # ---- Google Cast guide steps ----
+  - key: "sn_home_0026"
+    fallback: "Go to Settings {%androidset_icon} > Connections > Wi-Fi, then turn on Wi-Fi."
+    source: from_pdf
+    screen: "5.2-1"
+    ux_tag: "4"
+    placeholders: ["{%androidset_icon}"]
+    context: "Google Cast 1단계 설명 문구"
+
+  - key: "sn_home_0027"
+    fallback: "If the network is not connected on the phone, select your \"{%network name}\" to connect."
+    source: from_pdf
+    screen: "5.2-1"
+    ux_tag: "4-1"
+    placeholders: ["{%network name}"]
+    context: "Google Cast 1단계 보조 문구 (유선 연결 시 미제공)"
+
+  - key: "sn_home_0028"
+    fallback: "Select {%casting_icon} icon on the top of the screen after opening YouTube app on the smart phone."
+    source: from_pdf
+    screen: "5.2-2"
+    ux_tag: "4"
+    placeholders: ["{%casting_icon}"]
+    context: "Google Cast 2단계 설명 문구"
+
+  - key: "sn_home_0029"
+    fallback: "You can use the same feature on iPhones or other apps if you see {%casting_icon} icon."
+    source: from_pdf
+    screen: "5.2-2"
+    ux_tag: "4"
+    placeholders: ["{%casting_icon}"]
+    context: "Google Cast 2단계 보조 문구"
+
+  - key: "deviceType_01801"
+    fallback: "Select LG %deviceType% from the list of devices found."
+    source: from_pdf
+    screen: ["5.2-3", "5.3-3"]
+    ux_tag: "4"
+    placeholders: ["%deviceType%"]
+    context: "Google Cast / AirPlay 3단계 공통 설명 문구"
+
+  - key: "deviceType_01943"
+    fallback: "If you cannot find your %deviceType% name, please agree to use terms after pressing Google Cast button."
+    source: from_pdf
+    screen: "5.2-3"
+    ux_tag: "4"
+    placeholders: ["%deviceType%"]
+    context: "Google Cast 3단계 보조 문구"
+
+  - key: "sn_home_0032"
+    fallback: "Google Cast"
+    source: from_pdf
+    screen: "5.2-3"
+    ux_tag: "5"
+    context: "구글캐스트로 이동 버튼 라벨"
+
+  # ---- AirPlay guide steps ----
+  - key: "sn_home_0033"
+    fallback: "Go to Settings {%iphoneset_icon} > Wi-Fi, then turn on Wi-Fi."
+    source: from_pdf
+    screen: "5.3-1"
+    ux_tag: "4"
+    placeholders: ["{%iphoneset_icon}"]
+    context: "AirPlay 1단계 설명 문구"
+
+  - key: "sn_home_0034"
+    fallback: "Open Control Center by swiping down from the upper-right corner of the screen then select {%airplay_icon} icon."
+    source: from_pdf
+    screen: "5.3-2"
+    ux_tag: "4"
+    placeholders: ["{%airplay_icon}"]
+    context: "AirPlay 2단계 설명 문구"
+
+  - key: "deviceType_01944"
+    fallback: "If an AirPlay passcode appears on your %deviceType%, enter the passcode on your iPhone."
+    source: from_pdf
+    screen: "5.3-3"
+    ux_tag: "4"
+    placeholders: ["%deviceType%"]
+    context: "AirPlay 3단계 보조 문구"
+
+  # ---- Sound Share ----
+  - key: "deviceType_01793"
+    fallback: "Play music from your Bluetooth-connected smartphone through the %deviceType% speakers."
+    source: from_pdf
+    screen: ["5.4", "5.5"]
+    ux_tag: "3"
+    placeholders: ["%deviceType%"]
+    context: "사운드셰어 설명 문구 (연결기기 있을 때/없을 때 공통 첫 문장)"
+
+  - key: "sn_home_0086"
+    fallback: "Recently Connected Device : {%Mobile_name}"
+    source: from_pdf
+    screen: "5.4"
+    ux_tag: "5"
+    placeholders: ["{%Mobile_name}"]
+    context: "가장 최근에 연결한 기기명"
+
+  - key: "sn_home_0037"
+    fallback: "Connect"
+    source: from_pdf
+    screen: "5.4"
+    ux_tag: "7"
+    context: "[연결하기] 버튼 라벨"
+
+  - key: "sn_home_0088"
+    fallback: "Check the status of Bluetooth menu settings of your mobile device."
+    source: from_pdf
+    screen: "5.5"
+    ux_tag: "toast.bluetooth_check"
+    context: "자동 연결 실패 시 토스트"
+
+  # ---- common buttons ----
+  - key: "sn_home_0099"
+    fallback: "Next"
+    source: from_pdf
+    screen: ["5.2-1", "5.2-2", "5.3-1", "5.3-2"]
+    ux_tag: "5"
+    context: "위저드 Next 버튼 (전 단계 공통)"
+
+  - key: "sn_home_0100"
+    fallback: "Previous"
+    source: from_pdf
+    screen: ["5.2-1", "5.2-2", "5.2-3", "5.3-1", "5.3-2", "5.3-3"]
+    ux_tag: ["6", "7"]
+    context: "위저드 Previous 버튼 (PDF에는 5.2-2 에만 태그 표기, 전 화면 공통 추정)"
+
+  - key: "sn_home_0084"
+    fallback: "Done"
+    source: from_pdf
+    screen: ["5.2-3", "5.3-3"]
+    ux_tag: ["6", "5"]
+    context: "위저드 마지막 단계 Done 버튼"
+
+  # ---- accessibility (Audio Guidance) ----
+  - key: "sn_home_0096"
+    fallback: "{total} items in total"
+    source: from_pdf
+    screen: "5"
+    context: "Audio Guidance — 진입 시 항목 수 발화"
+    accessibility_only: true
+
+  - key: "sn_home_0097"
+    fallback: "button"
+    source: from_pdf
+    screen: "5"
+    context: "Audio Guidance — 포커스 항목 뒤 'button' 발화"
+    accessibility_only: true
+
+  - key: "sn_home_0098"
+    fallback: "Exit app"
+    source: from_pdf
+    screen: "5"
+    ux_tag: "exit_icon"
+    context: "Audio Guidance — 앱 종료 버튼 포커스 시 발화"
+    accessibility_only: true
+
+  - key: "sn_home_0117"
+    fallback: "Cast"
+    source: from_pdf
+    screen: "5.2-2"
+    context: "Audio Guidance — {%casting_icon} 아이콘 발화"
+    accessibility_only: true
+
+  - key: "sn_home_0118"
+    fallback: "AirPlay"
+    source: from_pdf
+    screen: "5.3-2"
+    context: "Audio Guidance — {%airplay_icon} 아이콘 발화"
+    accessibility_only: true
+
+# ---- Strings visible in mockups with NO tag in the PDF ----
+missing_tags:
+  - screen: "5.3-1"
+    ux_tag: "4-1"
+    text: "If the network is not connected on the phone, select your \"{%network name}\" to connect."
+    note: "동일 문구의 Google Cast 판(5.2-1)은 sn_home_0027. 재사용 여부 불명."
+    unresolved_ref: "airplay-step1-secondary-tag"
+
+  - screen: "5.5"
+    ux_tag: "3"
+    text: "Select the Bluetooth menu from your phone's settings to connect to this %deviceType%."
+    note: "deviceType_01793 은 첫 문장에만 붙어 있음."
+    unresolved_ref: "soundshare-no-device-secondary-tag"
+
+  - screen: ["5.4", "5.5"]
+    ux_tag: "4"
+    text: "%deviceType% Name : {name}"
+    note: "라벨 문구태그 미표기."
+
+  - screen: ["5.4", "5.5"]
+    ux_tag: ["6", "5"]
+    text: "Close"
+    note: "[닫기] 버튼 라벨 문구태그 미표기."

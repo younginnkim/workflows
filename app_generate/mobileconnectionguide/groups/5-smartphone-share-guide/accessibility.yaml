@@ -1,0 +1,178 @@
+# Audio Guidance (TTS) + focus spec per view. Source: PDF 노란 박스 [Audio Guidance] 영역.
+group_key: "5"
+
+views:
+  - screen_id: "5"
+    source: "Audio Guidance 영역 (page 2)"
+    on_screen_enter:
+      template: "{title} + {description} + \"{total} items in total\" + {focused_item_label} + \"button\""
+      bindings:
+        title: "ux_tag:1 (Enjoy Smartphone Content)"
+        description: "ux_tag:2 (deviceType_01941)"
+        total: "ux_tag:3 카드 개수 (3)"
+        focused_item_label: "첫 포커스 카드 라벨"
+      i18n_tags: ["sn_home_0096", "sn_home_0097"]
+      natural: "진입 시 : <Title> + <Description> + <\"{total} items in total\"> + <Focused item label> + \"button\""
+
+    on_focus:
+      - target: "any focusable button"
+        template: "{focused_item_label} + \"button\""
+        natural: "버튼 포커스 시 : <Focused item label> + \"button\""
+
+      - target: "exit_icon"
+        template: "\"Exit app\" + \"button\""
+        i18n_tags: ["sn_home_0098"]
+        natural: "앱 종료 버튼 포커스 시 : \"Exit app\" + \"button\""
+
+    voice_foreground: []   # PDF에 Voice Foreground(핑크 박스) 영역 없음
+
+  - screen_id: "5.1"
+    source: "page 3 — Audio Guidance 영역 없음"
+    on_screen_enter:
+      inherits_from: "5"
+      note: "5.1은 5와 동일 목업 — Audio Guidance 미기재, view 5 규칙 상속 가정"
+      confirmed_by_user: false
+    on_focus:
+      - target: "any focusable card"
+        template: "{focused_item_label} + \"button\""
+        inherits_from: "5"
+    voice_foreground: []
+
+  - screen_id: "5.2-1"
+    source: "page 4 — Audio Guidance 영역 없음"
+    on_screen_enter:
+      inherits_from: "5"
+      confirmed_by_user: false
+    initial_focus:
+      target: "ux_tag:5 (Next 버튼)"
+      natural: "Default Focus"
+    focus_order: ["6", "5"]   # Previous(상단 좌측) → Next(하단 중앙)
+    on_focus:
+      - target: "ux_tag:5"
+        template: "{focused_item_label} + \"button\""
+        bindings: { focused_item_label: "Next" }
+      - target: "ux_tag:6"
+        template: "{focused_item_label} + \"button\""
+        bindings: { focused_item_label: "Previous" }
+    voice_foreground: []
+
+  - screen_id: "5.2-2"
+    source: "page 5 — Audio Guidance 영역 있음 (아이콘 발화 규칙)"
+    initial_focus:
+      target: "ux_tag:5 (Next 버튼)"
+      natural: "Default Focus"
+    focus_order: ["6", "5"]
+    icon_utterance:
+      - placeholder: "{%casting_icon}"
+        utterance: "Cast"
+        i18n_tags: ["sn_home_0117"]
+        natural: "문구 중 아이콘 발화는 아래 참고 — {%casting_icon} : <\"Cast\">"
+    on_focus:
+      - target: "ux_tag:5"
+        template: "{focused_item_label} + \"button\""
+        bindings: { focused_item_label: "Next" }
+    voice_foreground: []
+
+  - screen_id: "5.2-3"
+    source: "page 6 — Audio Guidance 영역 없음"
+    initial_focus:
+      target: "ux_tag:6 (Done 버튼)"
+      natural: "Default Focus"
+    focus_order: ["7", "5", "6"]   # Previous → Google Cast → Done
+    on_focus:
+      - target: "ux_tag:6"
+        template: "{focused_item_label} + \"button\""
+        bindings: { focused_item_label: "Done" }
+      - target: "ux_tag:5"
+        template: "{focused_item_label} + \"button\""
+        bindings: { focused_item_label: "Google Cast" }
+    voice_foreground: []
+
+  - screen_id: "5.3-1"
+    source: "page 7 — Audio Guidance 영역 없음"
+    initial_focus:
+      target: "ux_tag:5 (Next 버튼)"
+      natural: "Default Focus"
+    focus_order: ["6", "5"]
+    on_focus:
+      - target: "ux_tag:5"
+        template: "{focused_item_label} + \"button\""
+        bindings: { focused_item_label: "Next" }
+    voice_foreground: []
+
+  - screen_id: "5.3-2"
+    source: "page 8 — Audio Guidance 영역 있음 (아이콘 발화 규칙)"
+    initial_focus:
+      target: "ux_tag:5 (Next 버튼)"
+      natural: "Default Focus"
+    focus_order: ["6", "5"]
+    icon_utterance:
+      - placeholder: "{%airplay_icon}"
+        utterance: "AirPlay"
+        i18n_tags: ["sn_home_0118"]
+        natural: "문구 중 아이콘 발화는 아래 참고 — {%airplay_icon} : <\"AirPlay\">"
+    on_focus:
+      - target: "ux_tag:5"
+        template: "{focused_item_label} + \"button\""
+        bindings: { focused_item_label: "Next" }
+    voice_foreground: []
+
+  - screen_id: "5.3-3"
+    source: "page 9 — Audio Guidance 영역 없음"
+    initial_focus:
+      target: "ux_tag:5 (Done 버튼)"
+      natural: "Default Focus"
+    focus_order: ["6", "5"]
+    on_focus:
+      - target: "ux_tag:5"
+        template: "{focused_item_label} + \"button\""
+        bindings: { focused_item_label: "Done" }
+    voice_foreground: []
+
+  - screen_id: "5.4"
+    source: "page 10 — Audio Guidance 영역 있음"
+    on_screen_enter:
+      template: "{title} + {description} + {default_focus_item_label} + \"button\""
+      bindings:
+        title: "ux_tag:1 (Cast music from smartphone to %deviceType% speaker)"
+        description: "ux_tag:3 (deviceType_01793)"
+        default_focus_item_label: "Connect"
+      natural: "진입시: <Title> + <Description> + <Default Focus item label> + \"button\""
+    initial_focus:
+      target: "ux_tag:7 ([연결하기] Connect 버튼)"
+      derived_from: "Audio Guidance 의 <Default Focus item label>"
+    focus_order: ["6", "7"]   # Close → Connect
+    on_focus:
+      - target: "any focusable button"
+        template: "{focused_item_label} + \"button\""
+        natural: "버튼 포커스 시 : <Focused item label> + \"button\""
+    voice_foreground: []
+
+  - screen_id: "5.5"
+    source: "page 11 — Audio Guidance 영역 없음"
+    on_screen_enter:
+      inherits_from: "5.4"
+      confirmed_by_user: false
+      note: "동일 사운드셰어 계열이므로 5.4 규칙 상속 가정"
+    initial_focus:
+      target: "ux_tag:5 ([닫기] Close 버튼)"
+      confirmed_by_user: false
+      note: "PDF에 Default Focus 명시 없음 — 유일한 focusable 이므로 추정"
+    focus_order: ["5"]
+    on_focus:
+      - target: "ux_tag:5"
+        template: "{focused_item_label} + \"button\""
+        bindings: { focused_item_label: "Close" }
+    voice_foreground: []
+
+unresolved:
+  - id: "audio-guidance-inheritance"
+    description: >
+      5.1 / 5.2-1 / 5.2-3 / 5.3-1 / 5.3-3 / 5.5 는 Audio Guidance 박스가 페이지에 없음.
+      view 5 (또는 5.4) 의 규칙을 상속하는지, 별도 공통 UX 정책 문서에 있는지 불명.
+    user_decision: needs_design_input
+  - id: "focus-order-derivation"
+    description: >
+      focus_order 는 목업의 시각적 배치(Previous 상단좌측 → 본문 → 하단 버튼)에서 추론한 값.
+      PDF에 명시적 포커스 이동 규칙 기술 없음 ("Pattern, Component의 Wizardview에 따름" 위임).
+    user_decision: deferred

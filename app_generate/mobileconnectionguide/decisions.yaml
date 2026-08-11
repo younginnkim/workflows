@@ -1,0 +1,750 @@
+# Luna API decision cache — user-confirmed. luna-writer consumes this directly.
+# All entries resolved against local luna-api-docs (no memory recall).
+luna_docs_ref: /home/younginkim/project/2026/ai/skills/luna-api-docs
+
+# ─── generated_code 규칙 (luna-writer 가 채움) ────────────────────────────────
+# 각 decision 의 generated_code 블록은 그대로 잘라 붙일 수 있는 코드다.
+#   service_code : lib/data/service/*_service.dart 의 메서드 (클래스 본문에 삽입)
+#   entity_code  : lib/domain/entity/*.dart 의 모델 (있는 경우만)
+#   wiring       : 해당 화면 view_model 에서 호출하는 코드
+# 같은 파일을 공유하는 decision 이 여러 개면(예: bluetooth2) import/필드 선언은
+# generated_code_meta.file_headers 에 한 번만 정의하고, 메서드만 각 decision 에 둔다.
+generated_code_meta:
+  project: mobile_connection_guide
+  language: flutter-dart
+  architecture: mvvm            # data/service · domain/entity · presentation/page
+  bridge_import: "package:webos_service_bridge/webos_service_bridge.dart"
+  bridge_dependency: "pubspec.yaml:114 webos_service_bridge (git: flutter-webos-plugins)"
+  patterns_source: luna-writer-skill (callOneReply / call().listen())
+  rules:
+    - "단일 호출: WebOSServiceBridge.callOneReply(request)"
+    - "구독: WebOSServiceBridge.call(request).listen(...) + dispose() 에서 cancel()"
+    - "응답은 반드시 returnValue 확인, 실패 시 errorText 로그"
+    - "acg 값이 있으면 appinfo.json > requiredPermissions 주석으로 명시"
+    - "{UNRESOLVED:*} / 문서 미확인 값은 절대 추측하지 않고 TODO + 런타임 예외로 남김"
+
+  # 파일별 공통 헤더 — 각 서비스 파일 최상단에 1회만 작성한다.
+  file_headers:
+    lib/data/service/connectionmanager_service.dart: |
+      // ConnectionmanagerService — LS2 service binding for com.webos.service.connectionmanager
+      import 'dart:async';
+
+      import 'package:webos_service_bridge/webos_service_bridge.dart';
+
+      import '../../domain/entity/connectionmanager.dart';
+
+      class ConnectionmanagerService {
+        StreamSubscription<Map<String, dynamic>>? _statusSubscription;
+
+        // ↓ decision: network-status 의 service_code 를 여기에 삽입
+      }
+    lib/data/service/bluetooth2_service.dart: |
+      // Bluetooth2Service — LS2 service binding for com.webos.service.bluetooth2
+      import 'dart:async';
+
+      import 'package:webos_service_bridge/webos_service_bridge.dart';
+
+      import '../../domain/entity/bluetooth2.dart';
+
+      class Bluetooth2Service {
+        StreamSubscription<Map<String, dynamic>>? _pairedDevicesSubscription;
+
+        // ↓ decision: bt-a2dp-connect / bt-paired-devices 의 service_code 를 여기에 삽입
+      }
+    lib/data/service/audio_service.dart: |
+      // AudioService — LS2 service binding for com.webos.service.audio
+      import 'package:webos_service_bridge/webos_service_bridge.dart';
+
+      class AudioService {
+        // ↓ decision: soundout-get / soundout-set 의 service_code 를 여기에 삽입
+      }
+    lib/data/service/applicationmanager_service.dart: |
+      // ApplicationmanagerService — LS2 service binding for com.webos.service.applicationmanager
+      import 'package:webos_service_bridge/webos_service_bridge.dart';
+
+      class ApplicationmanagerService {
+        // ACG required: application.operation (declare in appinfo.json > requiredPermissions)
+        /// luna://com.webos.service.applicationmanager/launch — 공통 실행 헬퍼.
+        /// doc: API_Docs/com.webos.service.applicationmanager_v4.9.md:5406
+        Future<bool> launch({
+          required String id,
+          Map<String, dynamic>? params,
+        }) async {
+          final request = WebOSServiceData(
+            'luna://com.webos.service.applicationmanager/launch',
+            payload: {
+              'id': id,
+              if (params != null) 'params': params,
+            },
+          );
+
+          final response = await WebOSServiceBridge.callOneReply(request);
+
+          if (response != null && response['returnValue'] == true) {
+            return true;
+          }
+          print('launch($id) failed: ${response?['errorText']}');
+          return false;
+        }
+
+        // ↓ decision: soundshare-stream-out / launch-network-settings /
+        //   launch-google-cast 의 service_code 를 여기에 삽입
+      }
+
+luna_decisions:
+  - id: network-status
+    natural: "네트워크 미연결 시, 특정 카드(안드로이드폰 콘텐츠 TV에서 보기, 아이폰 화면 TV에서 보기) 선택하면 아래 팝업 호출"
+    also_covers:
+      - "기기가 유선 네트워크로 연결된 상태일 때는 미제공함"
+      - "TV가 유선 네트워크로 연결된 상태일 때는 미제공함"
+    search_query: "connectionmanager getStatus wifi wired state"
+    search_command: "grep -nE '^## ' luna-api-docs/API_Docs/com.webos.service.connectionmanager_v3.0.md"
+    doc_source: "API_Docs/com.webos.service.connectionmanager_v3.0.md:488"
+    chosen:
+      service: "com.webos.service.connectionmanager"
+      method: "getStatus"
+      subscribe: true
+      acg: "networkconnection.query"
+      params_template:
+        subscribe: true
+      return_fields:
+        - isInternetConnectionAvailable
+        - "wifi.state"
+        - "wired.state"
+        - "wired.interfaceName"
+      condition_expr_offline: "response.isInternetConnectionAvailable == false"
+      condition_expr_wired: "response.wired.state == 'connected'"
+    rationale: >
+      단일 API로 (1) 인터넷 연결 여부 (팝업 호출 조건) 와
+      (2) 유선 연결 여부 (4-1 보조 문구 미제공 조건) 를 모두 판단 가능.
+    confirmed_by_user: true
+    confirmed_at: "2026-08-10"
+    used_in_screens: ["5.1", "5.2-1", "5.3-1"]
+    generated_code:
+      target_file: lib/data/service/connectionmanager_service.dart
+      target_class: ConnectionmanagerService
+      entity_file: lib/domain/entity/connectionmanager.dart
+      service_code: |
+        // ACG required: networkconnection.query (declare in appinfo.json > requiredPermissions)
+        /// luna://com.webos.service.connectionmanager/getStatus (subscribe)
+        /// doc: API_Docs/com.webos.service.connectionmanager_v3.0.md:488
+        ///
+        /// 네트워크 상태 변화를 계속 통지한다.
+        /// - 팝업 호출 조건 : status.isOffline
+        /// - 유선 연결 조건 : status.isWiredConnected (보조 문구 미제공)
+        void startStatusSubscribe({
+          required void Function(Connectionmanager status) onStatus,
+        }) {
+          final request = WebOSServiceData(
+            'luna://com.webos.service.connectionmanager/getStatus',
+            payload: {'subscribe': true},
+          );
+
+          _statusSubscription = WebOSServiceBridge.call(request).listen((event) {
+            if (event['returnValue'] == true) {
+              onStatus(Connectionmanager.fromMap(event));
+            } else {
+              print('getStatus error: ${event['errorText']}');
+            }
+          });
+        }
+
+        void stopStatusSubscribe() {
+          _statusSubscription?.cancel();
+          _statusSubscription = null;
+        }
+      entity_code: |
+        // Connectionmanager — Entity for com.webos.service.connectionmanager
+        /// getStatus 응답 매핑. return_fields 만 담는다.
+        class Connectionmanager {
+          const Connectionmanager({
+            required this.isInternetConnectionAvailable,
+            this.wifiState,
+            this.wiredState,
+            this.wiredInterfaceName,
+          });
+
+          final bool isInternetConnectionAvailable;
+          final String? wifiState;
+          final String? wiredState;
+          final String? wiredInterfaceName;
+
+          /// condition_expr_offline: response.isInternetConnectionAvailable == false
+          bool get isOffline => !isInternetConnectionAvailable;
+
+          /// condition_expr_wired: response.wired.state == 'connected'
+          bool get isWiredConnected => wiredState == 'connected';
+
+          factory Connectionmanager.fromMap(Map<String, dynamic> map) {
+            final wifi = map['wifi'] as Map<String, dynamic>?;
+            final wired = map['wired'] as Map<String, dynamic>?;
+            return Connectionmanager(
+              isInternetConnectionAvailable:
+                  map['isInternetConnectionAvailable'] as bool? ?? false,
+              wifiState: wifi?['state'] as String?,
+              wiredState: wired?['state'] as String?,
+              wiredInterfaceName: wired?['interfaceName'] as String?,
+            );
+          }
+        }
+      wiring:
+        - screen: "5.1"
+          file: lib/presentation/page/smartphone_share_guide/main_view_model.dart
+          target_class: MainViewModel
+          code: |
+            final _connectionmanager = ConnectionmanagerService();
+            final _applicationmanager = ApplicationmanagerService();
+
+            Connectionmanager? networkStatus;
+
+            /// 진입 시 1회 구독 시작 — 이후 상태 변화가 그대로 반영된다.
+            void init() {
+              _connectionmanager.startStatusSubscribe(onStatus: (status) {
+                networkStatus = status;
+                notifyListeners();
+              });
+            }
+
+            /// 카드(안드로이드폰 콘텐츠 / 아이폰 화면) 선택 시 호출.
+            /// 미연결이면 네트워크 설정 필요 팝업, 연결이면 가이드로 진행.
+            void onShareCardSelected(VoidCallback openGuide) {
+              if (networkStatus?.isOffline ?? true) {
+                showNetworkRequiredPopup = true;
+                notifyListeners();
+                return;
+              }
+              openGuide();
+            }
+
+            /// 유선 연결 상태에서는 4-1 보조 문구를 제공하지 않는다.
+            bool get showWirelessHintText =>
+                !(networkStatus?.isWiredConnected ?? false);
+
+            @override
+            void dispose() {
+              _connectionmanager.stopStatusSubscribe();
+              super.dispose();
+            }
+        - screen: "5.2-1"
+          file: lib/presentation/page/smartphone_share_guide/google_cast_1_view_model.dart
+          target_class: GoogleCast1ViewModel
+          code: |
+            // 5.1 과 동일 패턴 — MainViewModel 의 init()/dispose() 구독 코드를 그대로 사용.
+            // 이 화면에서는 isOffline 일 때 가이드 진행을 막고 팝업을 띄운다.
+            final _connectionmanager = ConnectionmanagerService();
+            Connectionmanager? networkStatus;
+
+            void init() {
+              _connectionmanager.startStatusSubscribe(onStatus: (status) {
+                networkStatus = status;
+                notifyListeners();
+              });
+            }
+
+            bool get isNetworkRequired => networkStatus?.isOffline ?? true;
+
+            @override
+            void dispose() {
+              _connectionmanager.stopStatusSubscribe();
+              super.dispose();
+            }
+        - screen: "5.3-1"
+          file: lib/presentation/page/smartphone_share_guide/air_play_1_view_model.dart
+          target_class: AirPlay1ViewModel
+          code: |
+            // 5.2-1 과 동일 — GoogleCast1ViewModel 의 구독/판정 코드를 그대로 사용한다.
+
+  - id: bt-a2dp-connect
+    natural: "연결 이력이 있을 경우 가장 최근에 연결한 기기에 연결 시도"
+    search_query: "bluetooth2 a2dp connect address"
+    search_command: "grep -n '^## a2dp/\\|^## device/' luna-api-docs/API_Docs/com.webos.service.bluetooth2_v4.0.md"
+    doc_source: "API_Docs/com.webos.service.bluetooth2_v4.0.md:151"
+    chosen:
+      service: "com.webos.service.bluetooth2"
+      method: "a2dp/connect"
+      subscribe: false
+      acg: "bluetooth.query"
+      params_template:
+        address: "{recent_device.address}"
+    rationale: >
+      A2DP(음악 스트리밍) 프로파일 직접 연결 — '스마트폰 음악을 스피커로' 라는
+      이 화면의 목적과 정확히 일치.
+    confirmed_by_user: true
+    confirmed_at: "2026-08-10"
+    used_in_screens: ["5.4"]
+    generated_code:
+      target_file: lib/data/service/bluetooth2_service.dart
+      target_class: Bluetooth2Service
+      service_code: |
+        // ACG required: bluetooth.query (declare in appinfo.json > requiredPermissions)
+        /// luna://com.webos.service.bluetooth2/a2dp/connect
+        /// doc: API_Docs/com.webos.service.bluetooth2_v4.0.md:151
+        ///
+        /// [address] 는 params_template 의 {recent_device.address} 자리 —
+        /// device/getPairedDevices 결과에서 얻은 실제 주소를 넘긴다.
+        Future<bool> connectA2dp({required String address}) async {
+          final request = WebOSServiceData(
+            'luna://com.webos.service.bluetooth2/a2dp/connect',
+            payload: {'address': address},
+          );
+
+          final response = await WebOSServiceBridge.callOneReply(request);
+
+          if (response != null && response['returnValue'] == true) {
+            return true;
+          }
+          print('a2dp/connect failed: ${response?['errorText']}');
+          return false;
+        }
+      wiring:
+        - screen: "5.4"
+          file: lib/presentation/page/smartphone_share_guide/sound_share_paired_view_model.dart
+          target_class: SoundSharePairedViewModel
+          code: |
+            /// 가장 최근 기기에 연결 시도 → 성공 시 사운드 아웃 확인/변경 → Sound Share 실행.
+            Future<void> connectRecentDevice() async {
+              final device = recentDevice;   // bt-paired-devices 의 wiring 참고
+              if (device == null) return;
+
+              final connected =
+                  await _bluetooth2.connectA2dp(address: device.address);
+              if (!connected) return;
+
+              await ensureTvSpeakerOutput();  // soundout-get / soundout-set
+              await _applicationmanager.launchSoundSharePlay();
+            }
+
+  - id: bt-paired-devices
+    natural: "연결 이력 있는 기기 이름 / 가장 최근에 연결한 기기명 제공"
+    also_covers:
+      - "연결된 기기 이력이 없는 경우"
+    search_query: "bluetooth2 device getPairedDevices"
+    search_command: "grep -nE '^## device/' luna-api-docs/API_Docs/com.webos.service.bluetooth2_v4.0.md"
+    doc_source: "API_Docs/com.webos.service.bluetooth2_v4.0.md:8300"
+    chosen:
+      service: "com.webos.service.bluetooth2"
+      method: "device/getPairedDevices"
+      subscribe: true
+      acg: "bluetooth.query"
+      params_template:
+        subscribe: true
+      return_fields:
+        - "devices[]"
+      condition_expr_has_history: "response.devices.length > 0"
+      condition_expr_no_history: "response.devices.length == 0"
+    rationale: >
+      5.4(연결기기 있을 때) vs 5.5(없을 때) 분기의 데이터 소스.
+      단 '가장 최근' 정렬 기준 필드는 문서에 명시 없음 → unresolved 참고.
+    confirmed_by_user: false
+    auto_resolved: true
+    confirmed_at: "2026-08-10"
+    used_in_screens: ["5.4", "5.5"]
+    generated_code:
+      target_file: lib/data/service/bluetooth2_service.dart
+      target_class: Bluetooth2Service
+      entity_file: lib/domain/entity/bluetooth2.dart
+      service_code: |
+        // ACG required: bluetooth.query (declare in appinfo.json > requiredPermissions)
+        /// luna://com.webos.service.bluetooth2/device/getPairedDevices (subscribe)
+        /// doc: API_Docs/com.webos.service.bluetooth2_v4.0.md:8300
+        ///
+        /// devices[] 가 비면 5.5(이력 없음), 있으면 5.4(이력 있음) 로 분기한다.
+        void startPairedDevicesSubscribe({
+          required void Function(List<Bluetooth2Device> devices) onDevices,
+        }) {
+          final request = WebOSServiceData(
+            'luna://com.webos.service.bluetooth2/device/getPairedDevices',
+            payload: {'subscribe': true},
+          );
+
+          _pairedDevicesSubscription =
+              WebOSServiceBridge.call(request).listen((event) {
+            if (event['returnValue'] == true) {
+              final raw = (event['devices'] as List?) ?? const [];
+              onDevices(raw
+                  .whereType<Map<String, dynamic>>()
+                  .map(Bluetooth2Device.fromMap)
+                  .toList());
+            } else {
+              print('device/getPairedDevices error: ${event['errorText']}');
+            }
+          });
+        }
+
+        void stopPairedDevicesSubscribe() {
+          _pairedDevicesSubscription?.cancel();
+          _pairedDevicesSubscription = null;
+        }
+      entity_code: |
+        // Bluetooth2 — Entity for com.webos.service.bluetooth2
+        class Bluetooth2Device {
+          const Bluetooth2Device({required this.address, required this.name});
+
+          final String address;   // a2dp/connect 의 address 파라미터로 사용
+          final String name;      // 화면에 표시할 기기명
+
+          factory Bluetooth2Device.fromMap(Map<String, dynamic> map) =>
+              Bluetooth2Device(
+                address: map['address'] as String? ?? '',
+                name: map['name'] as String? ?? '',
+              );
+        }
+      wiring:
+        - screen: "5.4"
+          file: lib/presentation/page/smartphone_share_guide/sound_share_paired_view_model.dart
+          target_class: SoundSharePairedViewModel
+          code: |
+            final _bluetooth2 = Bluetooth2Service();
+            final _audio = AudioService();
+            final _applicationmanager = ApplicationmanagerService();
+
+            List<Bluetooth2Device> pairedDevices = const [];
+
+            /// condition_expr_has_history: devices.length > 0
+            bool get hasHistory => pairedDevices.isNotEmpty;
+
+            /// TODO(unresolved: bt-recent-device-order)
+            ///   '가장 최근에 연결한 기기' 정렬 기준 필드가
+            ///   com.webos.service.bluetooth2_v4.0.md 에 명시돼 있지 않다.
+            ///   지금은 응답 순서의 첫 항목을 사용한다 — 정렬 기준 필드가 확인되면
+            ///   그 필드로 sort 한 뒤 first 를 쓰도록 교체할 것. (추측 금지)
+            Bluetooth2Device? get recentDevice =>
+                pairedDevices.isEmpty ? null : pairedDevices.first;
+
+            void init() {
+              _bluetooth2.startPairedDevicesSubscribe(onDevices: (devices) {
+                pairedDevices = devices;
+                notifyListeners();
+              });
+            }
+
+            @override
+            void dispose() {
+              _bluetooth2.stopPairedDevicesSubscribe();
+              super.dispose();
+            }
+        - screen: "5.5"
+          file: lib/presentation/page/smartphone_share_guide/sound_share_unpaired_view_model.dart
+          target_class: SoundShareUnpairedViewModel
+          code: |
+            final _bluetooth2 = Bluetooth2Service();
+
+            List<Bluetooth2Device> pairedDevices = const [];
+
+            /// condition_expr_no_history: devices.length == 0
+            /// 이력이 생기면(구독 갱신) 5.4 로 전환한다.
+            bool get hasNoHistory => pairedDevices.isEmpty;
+
+            void init() {
+              _bluetooth2.startPairedDevicesSubscribe(onDevices: (devices) {
+                pairedDevices = devices;
+                notifyListeners();
+              });
+            }
+
+            @override
+            void dispose() {
+              _bluetooth2.stopPairedDevicesSubscribe();
+              super.dispose();
+            }
+
+  - id: soundout-get
+    natural: "연결 시 사운드 아웃 설정값이 '블루투스 기기' 또는 '블루투스 + 기기 스피커'로 설정되어 있는 경우"
+    search_query: "audio getSoundOutput"
+    search_command: "grep -n '^## getSoundOutput' luna-api-docs/API_Docs/com.webos.service.audio_v1.14.md"
+    doc_source: "API_Docs/com.webos.service.audio_v1.14.md:3822"
+    chosen:
+      service: "com.webos.service.audio"
+      method: "getSoundOutput"
+      subscribe: false
+      acg: "audio.query"
+      params_template: {}
+      return_fields:
+        - soundOutput
+      condition_expr: "['bt_soundbar','lgSoundSync','tv_external_speaker'].includes(response.soundOutput)"
+    note: >
+      문서의 TV 적용 soundOutput 값 목록에 '블루투스 기기'/'블루투스+기기 스피커'와
+      1:1 대응하는 값 이름은 없음. 위 condition_expr 은 후보값이며 정확한 매핑은
+      Settings_Sound 시나리오 확인 필요 (unresolved: soundout-value-mapping).
+    confirmed_by_user: true
+    confirmed_at: "2026-08-10"
+    used_in_screens: ["5.4"]
+    generated_code:
+      target_file: lib/data/service/audio_service.dart
+      target_class: AudioService
+      service_code: |
+        /// TODO(unresolved: soundout-value-mapping)
+        ///   '블루투스 기기' / '블루투스 + 기기 스피커' 에 1:1 대응하는 soundOutput
+        ///   값 이름이 문서에 없다. 아래는 후보값이며 Settings_Sound 시나리오로
+        ///   확인 후 확정할 것. 임의 추가/추측 금지.
+        static const List<String> bluetoothSoundOutputCandidates = [
+          'bt_soundbar',
+          'lgSoundSync',
+          'tv_external_speaker',
+        ];
+
+        // ACG required: audio.query (declare in appinfo.json > requiredPermissions)
+        /// luna://com.webos.service.audio/getSoundOutput
+        /// doc: API_Docs/com.webos.service.audio_v1.14.md:3822
+        Future<String?> getSoundOutput() async {
+          final request = WebOSServiceData(
+            'luna://com.webos.service.audio/getSoundOutput',
+            payload: const {},
+          );
+
+          final response = await WebOSServiceBridge.callOneReply(request);
+
+          if (response != null && response['returnValue'] == true) {
+            return response['soundOutput'] as String?;
+          }
+          print('getSoundOutput failed: ${response?['errorText']}');
+          return null;
+        }
+
+        /// condition_expr 대응 — 현재 출력이 블루투스 계열인지.
+        Future<bool> isBluetoothSoundOutput() async {
+          final current = await getSoundOutput();
+          return current != null &&
+              bluetoothSoundOutputCandidates.contains(current);
+        }
+      wiring:
+        - screen: "5.4"
+          file: lib/presentation/page/smartphone_share_guide/sound_share_paired_view_model.dart
+          target_class: SoundSharePairedViewModel
+          code: |
+            /// 연결 직후: 사운드 아웃이 블루투스 계열이면 '기기 스피커' 로 되돌린다.
+            Future<void> ensureTvSpeakerOutput() async {
+              if (await _audio.isBluetoothSoundOutput()) {
+                await _audio.setSoundOutputToTvSpeaker();
+              }
+            }
+
+  - id: soundout-set
+    natural: "'기기 스피커'로 변경함"
+    search_query: "audio setSoundOutput tv_speaker"
+    search_command: "grep -n '^## setSoundOutput' luna-api-docs/API_Docs/com.webos.service.audio_v1.14.md"
+    doc_source: "API_Docs/com.webos.service.audio_v1.14.md:13467"
+    chosen:
+      service: "com.webos.service.audio"
+      method: "setSoundOutput"
+      subscribe: false
+      params_template:
+        soundOutput: "tv_speaker"
+    rationale: "TV 적용 값 목록에 tv_speaker 존재 확인 — '기기 스피커'에 대응."
+    confirmed_by_user: true
+    confirmed_at: "2026-08-10"
+    used_in_screens: ["5.4"]
+    generated_code:
+      target_file: lib/data/service/audio_service.dart
+      target_class: AudioService
+      service_code: |
+        /// luna://com.webos.service.audio/setSoundOutput
+        /// doc: API_Docs/com.webos.service.audio_v1.14.md:13467
+        /// 'tv_speaker' = 기기 스피커 (문서의 TV 적용 값 목록에서 확인).
+        Future<bool> setSoundOutputToTvSpeaker() async {
+          final request = WebOSServiceData(
+            'luna://com.webos.service.audio/setSoundOutput',
+            payload: const {'soundOutput': 'tv_speaker'},
+          );
+
+          final response = await WebOSServiceBridge.callOneReply(request);
+
+          if (response != null && response['returnValue'] == true) {
+            return true;
+          }
+          print('setSoundOutput failed: ${response?['errorText']}');
+          return false;
+        }
+      wiring:
+        - screen: "5.4"
+          file: lib/presentation/page/smartphone_share_guide/sound_share_paired_view_model.dart
+          target_class: SoundSharePairedViewModel
+          code: |
+            // soundout-get 의 ensureTvSpeakerOutput() 에서 함께 호출된다.
+
+  - id: soundshare-stream-out
+    natural: "Sound Share 앱 실행 후, Play 씬으로 이동"
+    search_query: "soundshare startStreamOut"
+    search_command: "grep -nE '^## ' luna-api-docs/API_Docs/com.webos.service.soundshare_v1.0.md"
+    doc_source: "API_Docs/com.webos.service.soundshare_v1.0.md:151"
+    chosen:
+      service: "com.webos.service.applicationmanager"
+      method: "launch"
+      params_template:
+        id: "{UNRESOLVED:soundshare_app_id}"
+        params:
+          scene: "play"
+    alternative_considered:
+      service: "com.webos.service.soundshare"
+      method: "startStreamOut"
+      why_not: "앱 실행/화면 이동이 아니라 이미 연결된 상태에서 스트림을 여는 단계"
+    rationale: "사용자 확정: 화면 전환 3건 모두 applicationmanager/launch."
+    confirmed_by_user: true
+    confirmed_at: "2026-08-10"
+    used_in_screens: ["5.4"]
+    generated_code:
+      target_file: lib/data/service/applicationmanager_service.dart
+      target_class: ApplicationmanagerService
+      service_code: |
+        /// TODO(unresolved: soundshare-app-id)
+        ///   params_template 의 {UNRESOLVED:soundshare_app_id} 자리.
+        ///   Sound Share appId 는 API_Docs 에서 확인되지 않았다 — 추측 금지.
+        ///   확인된 appId 로 아래 상수를 채우기 전까지는 호출 시 예외로 실패한다.
+        static const String? soundShareAppId = null;
+
+        /// luna://com.webos.service.applicationmanager/launch
+        /// params: {scene: 'play'} — Sound Share 앱의 Play 씬으로 진입.
+        Future<bool> launchSoundSharePlay() async {
+          final appId = soundShareAppId;
+          if (appId == null) {
+            throw StateError(
+              'soundShareAppId unresolved — decisions.yaml unresolved: '
+              'soundshare-app-id 를 확정한 뒤 상수를 채우세요.',
+            );
+          }
+          return launch(id: appId, params: const {'scene': 'play'});
+        }
+      wiring:
+        - screen: "5.4"
+          file: lib/presentation/page/smartphone_share_guide/sound_share_paired_view_model.dart
+          target_class: SoundSharePairedViewModel
+          code: |
+            // bt-a2dp-connect 의 connectRecentDevice() 마지막 단계에서 호출된다.
+            //   await _applicationmanager.launchSoundSharePlay();
+
+  - id: launch-network-settings
+    natural: "Yes 선택 시, 네트워크 연결 화면으로 이동"
+    search_query: "applicationmanager launch settings network"
+    search_command: "grep -n '^## launch' luna-api-docs/API_Docs/com.webos.service.applicationmanager_v4.9.md"
+    doc_source: "API_Docs/com.webos.service.applicationmanager_v4.9.md:5406"
+    chosen:
+      service: "com.webos.service.applicationmanager"
+      method: "launch"
+      acg: "application.operation"
+      params_template:
+        id: "com.webos.app.settings"
+        params:
+          target: "network"
+    note: >
+      appId 'com.webos.app.settings' 는 API_Docs 예제(com.webos.notification_v2.2.md:735)에서
+      확인된 값. params.target 세부 키는 문서에 없음 → unresolved: settings-deeplink-target.
+    confirmed_by_user: true
+    confirmed_at: "2026-08-10"
+    used_in_screens: ["5.1"]
+    generated_code:
+      target_file: lib/data/service/applicationmanager_service.dart
+      target_class: ApplicationmanagerService
+      service_code: |
+        /// appId 는 API_Docs 예제(com.webos.notification_v2.2.md:735)에서 확인된 값.
+        static const String settingsAppId = 'com.webos.app.settings';
+
+        // ACG required: application.operation (declare in appinfo.json > requiredPermissions)
+        /// luna://com.webos.service.applicationmanager/launch — 네트워크 설정 화면.
+        /// doc: API_Docs/com.webos.service.applicationmanager_v4.9.md:5406
+        ///
+        /// TODO(unresolved: settings-deeplink-target)
+        ///   params.target 키/값('network')은 문서에 정의가 없다. 설정앱 딥링크
+        ///   스펙이 확인되면 교체할 것. 확인 전에도 앱 자체는 실행되므로 호출은
+        ///   유지하되, 딥링크가 안 먹으면 이 파라미터가 원인이다.
+        Future<bool> launchNetworkSettings() {
+          return launch(
+            id: settingsAppId,
+            params: const {'target': 'network'},
+          );
+        }
+      wiring:
+        - screen: "5.1"
+          file: lib/presentation/popup/network_required_popup.dart
+          target_class: NetworkRequiredPopup
+          code: |
+            // 팝업의 Yes 버튼 → MainViewModel.onNetworkSettingsConfirmed() 호출.
+            // (팝업 위젯은 콜백만 받고 서비스를 직접 호출하지 않는다 — MVVM 유지)
+        - screen: "5.1"
+          file: lib/presentation/page/smartphone_share_guide/main_view_model.dart
+          target_class: MainViewModel
+          code: |
+            /// 네트워크 설정 필요 팝업에서 Yes 선택 시.
+            Future<void> onNetworkSettingsConfirmed() async {
+              showNetworkRequiredPopup = false;
+              notifyListeners();
+              await _applicationmanager.launchNetworkSettings();
+            }
+
+  - id: launch-google-cast
+    natural: "선택 시, 구글 캐스트 앱으로 이동"
+    search_query: "googlecast app id"
+    search_command: "grep -rn 'googlecast\\|GoogleCast' luna-api-docs/API_Docs/"
+    search_result_count: 0
+    chosen:
+      service: "com.webos.service.applicationmanager"
+      method: "launch"
+      params_template:
+        id: "{UNRESOLVED:google_cast_app_id}"
+    note: >
+      grep 0건 — Google Cast appId 는 문서에 존재하지 않음. 메소드는 launch 로 확정,
+      appId 는 절대 추측하지 않고 unresolved: google-cast-app-id 로 남김.
+    confirmed_by_user: true
+    confirmed_at: "2026-08-10"
+    used_in_screens: ["5.2-3"]
+    generated_code:
+      target_file: lib/data/service/applicationmanager_service.dart
+      target_class: ApplicationmanagerService
+      service_code: |
+        /// TODO(unresolved: google-cast-app-id)
+        ///   params_template 의 {UNRESOLVED:google_cast_app_id} 자리.
+        ///   luna-api-docs 전체 grep 0건 — appId 를 절대 추측하지 않는다.
+        ///   실제 appId 확인 후 아래 상수를 채울 것. 그 전에는 호출 시 예외 발생.
+        static const String? googleCastAppId = null;
+
+        /// luna://com.webos.service.applicationmanager/launch — Google Cast 앱.
+        Future<bool> launchGoogleCast() async {
+          final appId = googleCastAppId;
+          if (appId == null) {
+            throw StateError(
+              'googleCastAppId unresolved — decisions.yaml unresolved: '
+              'google-cast-app-id 를 확정한 뒤 상수를 채우세요.',
+            );
+          }
+          return launch(id: appId);
+        }
+      wiring:
+        - screen: "5.2-3"
+          file: lib/presentation/page/smartphone_share_guide/google_cast_3_view_model.dart
+          target_class: GoogleCast3ViewModel
+          code: |
+            final _applicationmanager = ApplicationmanagerService();
+
+            /// 가이드 마지막 단계(Done) 선택 시 Google Cast 앱으로 이동.
+            Future<void> onGoogleCastSelected() async {
+              await _applicationmanager.launchGoogleCast();
+            }
+
+# ─── 코드에 TODO 로 남긴 미해결 항목 (추측 금지 · 확인 후 교체) ───────────────
+unresolved:
+  - id: google-cast-app-id
+    where: "applicationmanager_service.dart · static const String? googleCastAppId"
+    blocking: "5.2-3 실행 — 상수가 null 이면 StateError"
+    reason: "luna-api-docs grep 0건"
+  - id: soundshare-app-id
+    where: "applicationmanager_service.dart · static const String? soundShareAppId"
+    blocking: "5.4 Sound Share 실행 — 상수가 null 이면 StateError"
+    reason: "{UNRESOLVED:soundshare_app_id} 미확정"
+  - id: settings-deeplink-target
+    where: "applicationmanager_service.dart · launchNetworkSettings() params.target"
+    blocking: "없음(앱은 실행됨, 딥링크만 미보장)"
+    reason: "params.target 키가 applicationmanager 문서에 없음"
+  - id: soundout-value-mapping
+    where: "audio_service.dart · bluetoothSoundOutputCandidates"
+    blocking: "없음(후보값으로 동작, 오탐/미탐 가능)"
+    reason: "'블루투스 기기'/'블루투스+기기 스피커' 대응 값 이름 문서 미기재"
+  - id: bt-recent-device-order
+    where: "sound_share_paired_view_model.dart · recentDevice getter"
+    blocking: "없음(응답 순서 first 사용)"
+    reason: "getPairedDevices 응답의 '가장 최근' 정렬 기준 필드 문서 미기재"
+
+# ─── appinfo.json 에 선언해야 하는 ACG ────────────────────────────────────────
+required_permissions:
+  - networkconnection.query   # network-status
+  - bluetooth.query           # bt-a2dp-connect, bt-paired-devices
+  - audio.query               # soundout-get
+  - application.operation     # launch-network-settings (launch 계열 공통)

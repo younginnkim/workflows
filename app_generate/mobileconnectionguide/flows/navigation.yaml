@@ -1,0 +1,188 @@
+# App-wide screen transition graph (cumulative).
+source_pdf: "mobileconnectionguide.pdf"
+
+transitions:
+  # ---- entry / exit ----
+  - from: "home.card.mobile_connection"
+    to: "5"
+    trigger: "on_select (홈에서 모바일 연결하기 카드 선택)"
+    impl_type: deep_link
+    natural: "진입 방법 : 홈에서 모바일 연결하기 카드 선택"
+    cross_group: true
+
+  - from: "5"
+    to: "__exit__"
+    trigger: "on_select exit_icon | press BACK"
+    impl_type: navigate_back
+    natural: "종료 방법 : 리모컨 [Back] 버튼, 종료 아이콘"
+
+  # ---- 5.1 main → guides ----
+  - from: "5.1"
+    to: "5.2-1"
+    trigger: "on_select ux_tag:1 when network.connected && service.available"
+    impl_type: navigate_internal
+    natural: "선택 시, Google Cast 연결 가이드 화면 실행"
+
+  - from: "5.1"
+    to: "5.3-1"
+    trigger: "on_select ux_tag:2 when network.connected && service.available"
+    impl_type: navigate_internal
+    natural: "선택 시, AirPlay 연결 가이드 화면 실행"
+
+  - from: "5.1"
+    to: "5.4"
+    trigger: "on_select ux_tag:3 when paired_devices.length > 0"
+    impl_type: navigate_internal
+    natural: "선택 시, 사운드 셰어 연결 화면으로 이동"
+
+  - from: "5.1"
+    to: "5.5"
+    trigger: "on_select ux_tag:3 when paired_devices.length == 0"
+    impl_type: navigate_internal
+    natural: "선택 시, 사운드 셰어 연결 화면으로 이동 (연결된 기기 이력이 없는 경우)"
+
+  - from: "5.1"
+    to: "popup.network_required"
+    trigger: "on_select ux_tag:1|2 when isInternetConnectionAvailable == false"
+    impl_type: navigate_internal
+    natural: "네트워크 미연결 시, 특정 카드 선택하면 아래 팝업 호출"
+
+  - from: "5.1"
+    to: "toast.service_unavailable"
+    trigger: "on_select ux_tag:1|2 when service unavailable (미지원 국가 등)"
+    impl_type: navigate_internal
+    natural: "특정 사유(e.g. 미지원 서비스 국가 등)에 의해 Google Cast, AirPlay 사용이 불가할 때, 선택 시 우측 토스트 팝업 제공"
+    unresolved_ref: "service-availability-source"
+
+  - from: "popup.network_required"
+    to: "settings.network"
+    trigger: "on_select Yes"
+    impl_type: luna_call
+    natural: "Yes 선택 시, 네트워크 연결 화면으로 이동"
+    decision_ref: launch-network-settings
+    cross_group: true
+
+  - from: "popup.network_required"
+    to: "5.1"
+    trigger: "on_select No"
+    impl_type: local_state
+    natural: "No 선택 시, 팝업 닫힘"
+
+  # ---- Google Cast wizard ----
+  - from: "5.2-1"
+    to: "5.2-2"
+    trigger: "on_select ux_tag:5 (Next)"
+    impl_type: navigate_internal
+    natural: "선택 시, 다음페이지 이동"
+
+  - from: "5.2-1"
+    to: "5.1"
+    trigger: "on_select ux_tag:6 (Previous) | press BACK"
+    impl_type: navigate_back
+    natural: "선택 시, 이전 화면으로 이동"
+
+  - from: "5.2-2"
+    to: "5.2-3"
+    trigger: "on_select ux_tag:5 (Next)"
+    impl_type: navigate_internal
+    natural: "선택 시, 다음페이지 이동"
+
+  - from: "5.2-2"
+    to: "5.2-1"
+    trigger: "on_select ux_tag:6 (Previous) | press BACK"
+    impl_type: navigate_back
+    natural: "이전 화면으로 이동"
+
+  - from: "5.2-3"
+    to: "5.1"
+    trigger: "on_select ux_tag:6 (Done)"
+    impl_type: navigate_internal
+    natural: "선택 시, 가이드 화면 종료되고 이전 단계로 이동"
+
+  - from: "5.2-3"
+    to: "5.2-2"
+    trigger: "on_select ux_tag:7 (Previous) | press BACK"
+    impl_type: navigate_back
+    natural: "이전 화면으로 이동"
+
+  - from: "5.2-3"
+    to: "app.google_cast"
+    trigger: "on_select ux_tag:5 (Google Cast)"
+    impl_type: luna_call
+    natural: "선택 시, 구글 캐스트 앱으로 이동"
+    decision_ref: launch-google-cast
+    cross_group: true
+    unresolved_ref: "google-cast-app-id"
+
+  # ---- AirPlay wizard ----
+  - from: "5.3-1"
+    to: "5.3-2"
+    trigger: "on_select ux_tag:5 (Next)"
+    impl_type: navigate_internal
+    natural: "선택 시, 다음페이지 이동"
+
+  - from: "5.3-1"
+    to: "5.1"
+    trigger: "on_select ux_tag:6 (Previous) | press BACK"
+    impl_type: navigate_back
+    natural: "선택 시, 이전 화면으로 이동"
+
+  - from: "5.3-2"
+    to: "5.3-3"
+    trigger: "on_select ux_tag:5 (Next)"
+    impl_type: navigate_internal
+    natural: "선택 시, 다음페이지 이동"
+
+  - from: "5.3-2"
+    to: "5.3-1"
+    trigger: "on_select ux_tag:6 (Previous) | press BACK"
+    impl_type: navigate_back
+    natural: "이전 화면으로 이동"
+
+  - from: "5.3-3"
+    to: "5.1"
+    trigger: "on_select ux_tag:5 (Done)"
+    impl_type: navigate_internal
+    natural: "선택 시, 가이드 화면 종료되고 이전 단계로 이동"
+
+  - from: "5.3-3"
+    to: "5.3-2"
+    trigger: "on_select ux_tag:6 (Previous) | press BACK"
+    impl_type: navigate_back
+    natural: "이전 화면으로 이동"
+
+  # ---- Sound Share ----
+  - from: "5.4"
+    to: "app.sound_share.play"
+    trigger: "on_select ux_tag:7 (Connect) → after a2dp/connect"
+    impl_type: luna_call
+    natural: "Sound Share 앱 실행 후, Play 씬으로 이동"
+    decision_ref: soundshare-stream-out
+    cross_group: true
+    unresolved_ref: "soundshare-app-id"
+
+  - from: "5.4"
+    to: "5.1"
+    trigger: "on_select ux_tag:6 (Close) | press BACK"
+    impl_type: navigate_back
+    natural: "Back 시, 이전 화면(메인화면)으로 이동"
+
+  - from: "5.5"
+    to: "5.1"
+    trigger: "on_select ux_tag:5 (Close) | press BACK"
+    impl_type: navigate_back
+    natural: "Back 시, 이전 화면(스마트폰 공유 Q카드 메인화면)으로 이동"
+
+# State-driven view swaps (not user-triggered navigation)
+state_transitions:
+  - from: "5.4"
+    to: "5.5"
+    trigger: "Sound Share 연결 상태에서 기기 연결을 끊거나 끊긴 경우"
+    impl_type: unresolved
+    unresolved_ref: "disconnect-detection-channel"
+
+  - from: "5.4"
+    to: "5.5"
+    trigger: "최근 연결했던 기기 자동 연결 시도하였으나 실패한 경우 (토스트 팝업과 함께 화면 표시)"
+    impl_type: unresolved
+    unresolved_ref: "auto-connect-failure-channel"
