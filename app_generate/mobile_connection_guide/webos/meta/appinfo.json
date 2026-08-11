@@ -1,0 +1,27 @@
+{
+    "id": "com.flutter.app.mobileconnectionguide",
+    "version": "1.0.0",
+    "vendor": "LG Electronics",
+    "type": "native",
+    "main": "mobile_connection_guide",
+    "title": "Flutter mobile_connection_guide app",
+    "icon": "icon.png",
+    "iconColor": "#ffffff",
+    "largeIcon": "icon.png",
+    "handlesRelaunch": true,
+    "visible": true,
+    "defaultWindowType": "card",
+    "trustLevel": "default",
+    "locationHint":"none",
+    "noSplashOnLaunch":true,
+    "spinnerOnLaunch": false,
+    "transparent":false,
+    "uiRevision":2,
+    "requiredPermissions": [
+        "applications",
+        "applications.launcher",
+        "applications.operation",
+        "settings",
+        "system"
+    ]
+}

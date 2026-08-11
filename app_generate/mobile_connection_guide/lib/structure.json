@@ -1,0 +1,149 @@
+{
+  "app": "mobile_connection_guide",
+  "pages": [
+    {
+      "view": "5",
+      "name": "스마트폰 공유 가이드 (진입 화면)",
+      "group": "5",
+      "page": "presentation/page/smartphone_share_guide/entry_page.dart",
+      "view_model": "presentation/page/smartphone_share_guide/entry_view_model.dart"
+    },
+    {
+      "view": "5.1",
+      "name": "스마트폰 공유 카드 > 메인 화면",
+      "group": "5",
+      "page": "presentation/page/smartphone_share_guide/main_page.dart",
+      "view_model": "presentation/page/smartphone_share_guide/main_view_model.dart"
+    },
+    {
+      "view": "5.2-1",
+      "name": "Google Cast > 가이드 화면(1)",
+      "group": "5",
+      "page": "presentation/page/smartphone_share_guide/google_cast_1_page.dart",
+      "view_model": "presentation/page/smartphone_share_guide/google_cast_1_view_model.dart"
+    },
+    {
+      "view": "5.2-2",
+      "name": "Google Cast > 가이드 화면(2)",
+      "group": "5",
+      "page": "presentation/page/smartphone_share_guide/google_cast_2_page.dart",
+      "view_model": "presentation/page/smartphone_share_guide/google_cast_2_view_model.dart"
+    },
+    {
+      "view": "5.2-3",
+      "name": "Google Cast > 가이드 화면(3)",
+      "group": "5",
+      "page": "presentation/page/smartphone_share_guide/google_cast_3_page.dart",
+      "view_model": "presentation/page/smartphone_share_guide/google_cast_3_view_model.dart"
+    },
+    {
+      "view": "5.3-1",
+      "name": "AirPlay > 가이드 화면(1)",
+      "group": "5",
+      "page": "presentation/page/smartphone_share_guide/air_play_1_page.dart",
+      "view_model": "presentation/page/smartphone_share_guide/air_play_1_view_model.dart"
+    },
+    {
+      "view": "5.3-2",
+      "name": "AirPlay > 가이드 화면(2)",
+      "group": "5",
+      "page": "presentation/page/smartphone_share_guide/air_play_2_page.dart",
+      "view_model": "presentation/page/smartphone_share_guide/air_play_2_view_model.dart"
+    },
+    {
+      "view": "5.3-3",
+      "name": "AirPlay > 가이드 화면(3)",
+      "group": "5",
+      "page": "presentation/page/smartphone_share_guide/air_play_3_page.dart",
+      "view_model": "presentation/page/smartphone_share_guide/air_play_3_view_model.dart"
+    },
+    {
+      "view": "5.4",
+      "name": "사운드셰어 > 연결기기 있을 때",
+      "group": "5",
+      "page": "presentation/page/smartphone_share_guide/sound_share_paired_page.dart",
+      "view_model": "presentation/page/smartphone_share_guide/sound_share_paired_view_model.dart"
+    },
+    {
+      "view": "5.5",
+      "name": "사운드셰어 > 연결기기 없을 때",
+      "group": "5",
+      "page": "presentation/page/smartphone_share_guide/sound_share_unpaired_page.dart",
+      "view_model": "presentation/page/smartphone_share_guide/sound_share_unpaired_view_model.dart"
+    }
+  ],
+  "popups": [
+    {
+      "view": "popup.network_required",
+      "name": "네트워크 설정 필요 팝업",
+      "file": "presentation/popup/network_required_popup.dart",
+      "used_in_screens": ["5.1"]
+    }
+  ],
+  "alerts": [],
+  "widgets": [
+    {
+      "view": "WizardView",
+      "name": "WizardView",
+      "file": "presentation/widget/wizard_view_widget.dart"
+    },
+    {
+      "view": "GuideDialog",
+      "name": "GuideDialog",
+      "file": "presentation/widget/guide_dialog_widget.dart"
+    },
+    {
+      "view": "Previous 버튼",
+      "name": "Previous 버튼",
+      "file": "presentation/widget/previous_widget.dart"
+    },
+    {
+      "view": "Next 버튼",
+      "name": "Next 버튼",
+      "file": "presentation/widget/next_widget.dart"
+    },
+    {
+      "view": "Done 버튼",
+      "name": "Done 버튼",
+      "file": "presentation/widget/done_widget.dart"
+    }
+  ],
+  "data": {
+    "services": [
+      {
+        "service": "com.webos.service.connectionmanager",
+        "file": "data/service/connectionmanager_service.dart"
+      },
+      {
+        "service": "com.webos.service.bluetooth2",
+        "file": "data/service/bluetooth2_service.dart"
+      },
+      {
+        "service": "com.webos.service.audio",
+        "file": "data/service/audio_service.dart"
+      },
+      {
+        "service": "com.webos.service.applicationmanager",
+        "file": "data/service/applicationmanager_service.dart"
+      }
+    ],
+    "entities": [
+      {
+        "service": "com.webos.service.connectionmanager",
+        "file": "domain/entity/connectionmanager.dart"
+      },
+      {
+        "service": "com.webos.service.bluetooth2",
+        "file": "domain/entity/bluetooth2.dart"
+      },
+      {
+        "service": "com.webos.service.audio",
+        "file": "domain/entity/audio.dart"
+      },
+      {
+        "service": "com.webos.service.applicationmanager",
+        "file": "domain/entity/applicationmanager.dart"
+      }
+    ]
+  }
+}
